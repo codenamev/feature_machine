@@ -1,0 +1,38 @@
+<% config = FeatureMachine.config %>
+<% content_for :title, "Edit work item — #{config.product_name}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <header class="page-header">
+    <p class="page-header__eyebrow">Admin · Work item</p>
+    <h1 class="page-header__title"><%= @work_item.title %></h1>
+    <p class="page-header__lede">
+      Write the spec so someone who wasn't in the conversation could build it.
+    </p>
+    <%= render config.admin_nav_partial if config.admin_nav_partial? %>
+  </header>
+
+  <% if @work_item.feature_requests.any? %>
+    <section class="spec-evidence" aria-labelledby="evidence-title">
+      <h2 class="entry-section__title" id="evidence-title">
+        The <%= pluralize(@work_item.feature_requests.size, "request") %> behind this
+      </h2>
+      <ul class="spec-evidence__list">
+        <% @work_item.feature_requests.includes(:user).oldest_first.each do |feature_request| %>
+          <%# The requester is named the host's way (config.user_label); the engine knows no host route to link. %>
+          <li>
+            <strong><%= feature_request.title %></strong> <span class="text-muted-foreground"><%= config.label_for(feature_request.user) %></span>
+            <% if feature_request.description.present? %><br><%= feature_request.description %><% end %>
+          </li>
+        <% end %>
+      </ul>
+      <%= button_to "Redraft the spec from these requests", draft_admin_work_item_path(@work_item),
+            class: "btn btn--secondary btn--sm",
+            form: { data: { turbo_confirm: "This replaces the title, summary, problem, scope and acceptance criteria with a new draft. Continue?" } } %>
+    </section>
+  <% end %>
+
+  <%= render "form", work_item: @work_item %>
+</div>

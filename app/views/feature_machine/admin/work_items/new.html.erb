@@ -1,0 +1,20 @@
+<% config = FeatureMachine.config %>
+<% triage = config.host_path(:admin_triage_path, self) %>
+<% content_for :title, "New work item — #{config.product_name}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <header class="page-header">
+    <p class="page-header__eyebrow">Admin</p>
+    <h1 class="page-header__title">New work item</h1>
+    <p class="page-header__lede">
+      For work nobody asked for in so many words.<% if triage %> To build one from requests,
+      use <%= link_to "triage", triage %> instead.<% end %>
+    </p>
+    <%= render config.admin_nav_partial if config.admin_nav_partial? %>
+  </header>
+
+  <%= render "form", work_item: @work_item %>
+</div>

@@ -1,0 +1,83 @@
+<% product = FeatureMachine.config.product_name %>
+<% new_bug_report = FeatureMachine.config.host_path(:new_bug_report_path, self) %>
+<% errors = @feature_request.errors %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-default" %>
+<% field_class = "cn-field grid group/field w-full" %>
+<% label_class = "cn-label flex items-center select-none cn-field-label group/field-label peer/field-label flex w-fit items-center" %>
+<% hint_class = "cn-field-description [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 font-normal leading-normal" %>
+<% content_for :title, "Request a feature — #{product}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <header class="page-header">
+    <p class="page-header__eyebrow">Roadmap</p>
+    <h1 class="page-header__title">Request a feature</h1>
+    <p class="page-header__lede">
+      Tell us what you're trying to do. Only you and the maintainers see what
+      you write; you can follow it under
+      <%= link_to "your feature requests", feature_requests_path %>.
+      <% if new_bug_report %><%= link_to "Reporting a bug instead?", new_bug_report %><% end %>
+    </p>
+  </header>
+
+  <%# Plain form_with: the same Field / Input / Textarea / Button markup the
+      host's Poetry builder renders, written out so the engine carries no
+      dependency on the host's UI kit. Field order inside each cn-field:
+      label, control, hint, error. aria-required rides the label-station
+      rule (never the native attribute); aria-describedby points at the
+      hint and, on a bounce, the error. %>
+  <%= form_with(model: @feature_request, class: "flex max-w-xl flex-col gap-5") do |form| %>
+    <% if errors.any? %>
+      <div data-slot="alert" data-variant="destructive" role="alert" class="cn-alert relative w-full group/alert cn-alert-variant-destructive">
+        <div data-slot="alert-title" class="cn-alert-title [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">That didn't go through</div>
+        <div data-slot="alert-description" class="cn-alert-description [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">
+          <ul class="list-inside list-disc">
+            <% errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <% title_errors = errors[:title] %>
+    <div data-slot="field" data-invalid="<%= title_errors.any? %>" class="<%= field_class %>">
+      <%= form.label :title, class: label_class, data: { slot: "field-label" } %>
+      <%= form.text_field :title,
+            class: "cn-input w-full min-w-0 outline-none",
+            placeholder: "e.g. Let me tag an article as 'reread later'",
+            maxlength: 120, minlength: 8, autofocus: true,
+            "aria-required": true,
+            "aria-invalid": (true if title_errors.any?),
+            "aria-describedby": ["feature_request_title_hint", ("feature_request_title_error" if title_errors.any?)].compact.join(" ") %>
+      <p id="feature_request_title_hint" data-slot="field-description" class="<%= hint_class %>">One line, the way you'd say it to a friend.</p>
+      <% if title_errors.any? %>
+        <p id="feature_request_title_error" data-slot="field-error" class="cn-field-error font-normal"><%= title_errors.to_sentence %></p>
+      <% end %>
+    </div>
+
+    <% description_errors = errors[:description] %>
+    <div data-slot="field" data-invalid="<%= description_errors.any? %>" class="<%= field_class %>">
+      <%= form.label :description, class: label_class, data: { slot: "field-label" } %>
+      <%= form.text_area :description,
+            class: "cn-textarea flex field-sizing-content min-h-16 w-full outline-none",
+            rows: 6, maxlength: 2000,
+            placeholder: "What are you trying to do, and what gets in the way today?",
+            "aria-invalid": (true if description_errors.any?),
+            "aria-describedby": ["feature_request_description_hint", ("feature_request_description_error" if description_errors.any?)].compact.join(" ") %>
+      <p id="feature_request_description_hint" data-slot="field-description" class="<%= hint_class %>">The problem, not the implementation. We'll figure out the how.</p>
+      <% if description_errors.any? %>
+        <p id="feature_request_description_error" data-slot="field-error" class="cn-field-error font-normal"><%= description_errors.to_sentence %></p>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" name="commit" value="Request it" data-slot="button" data-variant="default" data-size="default"
+              class="<%= button %> cn-button-variant-default"><span data-slot="label" class="contents">Request it</span></button>
+      <a href="<%= feature_requests_path %>" data-slot="button" data-variant="ghost" data-size="default"
+         class="<%= button %> cn-button-variant-ghost"><span data-slot="label" class="contents">Back to your requests</span></a>
+    </div>
+  <% end %>
+</div>

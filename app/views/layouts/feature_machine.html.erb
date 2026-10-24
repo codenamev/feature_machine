@@ -1,0 +1,21 @@
+<%# The engine's standalone shell, used only when a host sets
+    FeatureMachine.config.layout = "feature_machine". No host assets are
+    assumed: hosts add their own via content_for :head or name their own layout. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for?(:title) ? content_for(:title) : FeatureMachine.config.product_name %></title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+  </head>
+  <body>
+    <% if notice.present? %><p role="status" data-slot="flash-notice"><%= notice %></p><% end %>
+    <% if alert.present? %><p role="alert" data-slot="flash-alert"><%= alert %></p><% end %>
+    <main>
+      <%= yield %>
+    </main>
+  </body>
+</html>

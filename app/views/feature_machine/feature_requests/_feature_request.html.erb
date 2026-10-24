@@ -1,0 +1,47 @@
+<%# One of the signed-in user's own requests, feature or bug: where it stands,
+    the maintainer's note, and what they originally wrote. Plain markup on the
+    host's cn-nr-entry hooks; the engine ships no components of its own. %>
+<% bug = feature_request.bug? %>
+<% roadmap = FeatureMachine.config.host_path(:roadmap_path, self) %>
+<article id="<%= dom_id(feature_request) %>" data-slot="nr-entry" data-state="ready"
+         class="cn-nr-entry flex gap-4 py-5 border-b border-border group/entry cn-nr-entry-state-ready">
+  <div data-slot="nr-entry-body" class="cn-nr-entry-body order-1 min-w-0 flex-1">
+    <div class="cn-nr-entry-title-row flex flex-wrap items-baseline gap-3">
+      <h2 data-slot="nr-entry-title" class="cn-nr-entry-title"><%= feature_request.title %></h2>
+      <span class="cn-nr-entry-status"><%= feature_request_status(feature_request) %></span>
+    </div>
+
+    <div data-slot="nr-entry-meta" class="cn-nr-entry-meta mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+      <span class="cn-nr-entry-meta-item"><%= bug ? "reported" : "requested" %> <%= feature_request.created_at.strftime("%b %-d, %Y") %></span>
+      <% if feature_request.shipped_at.present? %>
+        <span class="cn-nr-entry-meta-sep" aria-hidden="true">&middot;</span>
+        <span class="cn-nr-entry-meta-item"><%= bug ? "fixed" : "shipped" %> <%= feature_request.shipped_at.strftime("%b %-d, %Y") %></span>
+      <% end %>
+      <% if roadmap && feature_request.work_item&.on_roadmap? %>
+        <span class="cn-nr-entry-meta-sep" aria-hidden="true">&middot;</span>
+        <span class="cn-nr-entry-meta-item"><%= link_to "on the roadmap", "#{roadmap}##{dom_id(feature_request.work_item)}" %></span>
+      <% end %>
+    </div>
+
+    <p data-slot="nr-entry-summary" class="cn-nr-entry-summary mt-2 line-clamp-2"><%= request_status_blurb(feature_request) %></p>
+
+    <div data-slot="nr-entry-details" class="cn-nr-entry-details mt-4 pt-4">
+      <% if feature_request.progress_note.present? %>
+        <div class="entry-section">
+          <h3 class="entry-section__title">Update</h3>
+          <p class="entry-section__content"><%= simple_format(feature_request.progress_note, {}, wrapper_tag: "span") %></p>
+        </div>
+      <% end %>
+      <div class="entry-section">
+        <h3 class="entry-section__title"><%= bug ? "Your report" : "Your request" %></h3>
+        <p class="entry-section__content">
+          <% if feature_request.description.present? %>
+            <%= simple_format(feature_request.description, {}, wrapper_tag: "span") %>
+          <% else %>
+            No description given.
+          <% end %>
+        </p>
+      </div>
+    </div>
+  </div>
+</article>

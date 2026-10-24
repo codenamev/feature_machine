@@ -1,0 +1,79 @@
+<% config = FeatureMachine.config %>
+<% triage = config.host_path(:admin_triage_path, self) %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-default" %>
+<% content_for :title, "Work items — #{config.product_name}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <header class="page-header">
+    <p class="page-header__eyebrow">Admin</p>
+    <h1 class="page-header__title">Work items</h1>
+    <p class="page-header__lede">
+      The buildable units requests have been shaped into. Drafts are private;
+      everything planned, in progress or shipped is on the roadmap signed-in users see.
+    </p>
+    <%= render config.admin_nav_partial if config.admin_nav_partial? %>
+    <div class="mt-5 flex flex-wrap items-center gap-3">
+      <a href="<%= new_admin_work_item_path %>" data-slot="button" data-variant="default" data-size="default"
+         class="<%= button %> cn-button-variant-default"><span data-slot="label" class="contents">New work item</span></a>
+    </div>
+  </header>
+
+  <% if @work_items.values.all?(&:empty?) %>
+    <%# Plain markup on the host's cn-empty hooks; the engine ships no components of its own. %>
+    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance empty-state">
+      <div data-slot="empty-header" class="cn-empty-header flex max-w-sm flex-col items-center">
+        <div data-slot="empty-icon" data-variant="icon" class="cn-empty-media flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0 cn-empty-media-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        </div>
+        <h2 data-slot="empty-title" class="cn-empty-title cn-font-heading">No work items yet</h2>
+        <p data-slot="empty-description" class="cn-empty-description text-muted-foreground [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary"><% if triage %>Form one from a group of requests in triage, or start one from scratch.<% else %>Start one from scratch.<% end %></p>
+      </div>
+      <% if triage %>
+        <div data-slot="empty-content" class="cn-empty-content flex w-full max-w-sm min-w-0 flex-col items-center gap-4 text-sm text-balance">
+          <a href="<%= triage %>" data-slot="button" data-variant="outline" data-size="default"
+             class="<%= button %> cn-button-variant-outline"><span data-slot="label" class="contents">Go to triage</span></a>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <% @work_items.each do |status, work_items| %>
+      <% next if work_items.empty? %>
+      <section class="mt-12" aria-labelledby="work-items-<%= status %>">
+        <h2 id="work-items-<%= status %>" class="flex items-baseline gap-3">
+          <%= work_item_status(work_items.first) %>
+          <span class="text-sm text-muted-foreground"><%= pluralize(work_items.size, "item") %></span>
+        </h2>
+        <p class="page-header__lede mt-2"><%= work_item_status_blurb(status) %></p>
+        <div class="entry-list">
+          <% work_items.each do |work_item| %>
+            <%# One work item on the host's cn-nr-entry hooks: title, meta row, summary. %>
+            <% meta = [ work_kind_label(work_item), pluralize(work_item.feature_requests.size, "request"), work_item_demand(work_item), (work_item.handoff_ready? ? "spec ready" : "spec incomplete") ].compact %>
+            <% if (pull_request = pull_request_href(work_item)) %>
+              <% meta << link_to("PR #{work_item.pull_request_number}", pull_request, rel: "noopener", target: "_blank") %>
+            <% end %>
+            <article id="<%= dom_id(work_item) %>" data-slot="nr-entry" data-state="ready"
+                     class="cn-nr-entry flex gap-4 py-5 border-b border-border group/entry cn-nr-entry-state-ready">
+              <div data-slot="nr-entry-body" class="cn-nr-entry-body order-1 min-w-0 flex-1">
+                <div class="cn-nr-entry-title-row flex flex-wrap items-baseline gap-3">
+                  <h3 data-slot="nr-entry-title" class="cn-nr-entry-title"><%= link_to work_item.title, admin_work_item_path(work_item) %></h3>
+                </div>
+                <div data-slot="nr-entry-meta" class="cn-nr-entry-meta mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+                  <% meta.each_with_index do |item, index| %>
+                    <% if index.positive? %><span class="cn-nr-entry-meta-sep" aria-hidden="true">&middot;</span><% end %>
+                    <span class="cn-nr-entry-meta-item"><%= item %></span>
+                  <% end %>
+                </div>
+                <% if work_item.summary.present? %>
+                  <p data-slot="nr-entry-summary" class="cn-nr-entry-summary mt-2 line-clamp-2"><%= work_item.summary %></p>
+                <% end %>
+              </div>
+            </article>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+</div>
