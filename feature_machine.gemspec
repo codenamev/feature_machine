@@ -17,4 +17,6 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*", "app/**/*", "config/**/*", "db/**/*"]
 
   spec.add_dependency "rails", ">= 8.1"
+  spec.add_dependency "ruby_llm"
+  spec.add_dependency "neighbor"
 end
