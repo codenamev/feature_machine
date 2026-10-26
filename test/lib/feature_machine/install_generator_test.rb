@@ -32,4 +32,36 @@ class FeatureMachine::InstallGeneratorTest < Rails::Generators::TestCase
     output = run_generator
     assert_match "feature_machine:install:migrations", output
   end
+
+  test "draws the engine's routes into config/routes.rb" do
+    write_routes
+    run_generator
+
+    assert_file "config/routes.rb" do |content|
+      assert_match(/^  feature_machine_routes :web$/, content)
+      assert_match(/namespace :admin do\n\s+feature_machine_routes :admin\n/, content)
+      assert_match(/namespace :api, defaults: \{ format: :json \} do\n\s+feature_machine_routes :api\n/, content)
+    end
+  end
+
+  test "leaves routes alone when the host already calls the macro" do
+    write_routes("  feature_machine_routes :web\n")
+    run_generator
+
+    assert_file "config/routes.rb" do |content|
+      assert_equal 1, content.scan("feature_machine_routes").size
+    end
+  end
+
+  test "skips routes without failing when config/routes.rb is missing" do
+    output = run_generator
+    assert_match "add the feature_machine_routes calls yourself", output
+    assert_no_file "config/routes.rb"
+  end
+
+  private
+    def write_routes(body = "")
+      FileUtils.mkdir_p File.join(destination_root, "config")
+      File.write File.join(destination_root, "config/routes.rb"), "Rails.application.routes.draw do\n#{body}end\n"
+    end
 end

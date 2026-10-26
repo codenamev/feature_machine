@@ -11,6 +11,7 @@ require_relative "feature_machine/version"
 require_relative "feature_machine/configuration"
 require_relative "feature_machine/auth"
 require_relative "feature_machine/engine"
+require_relative "feature_machine/routes"
 
 module FeatureMachine
   # The Rack env key every engine controller and MCP tool reads its credential
