@@ -1,0 +1,137 @@
+# Mutation calibration cases for FeatureMachine::Judge.
+#
+# Each case is one base request plus two mutants:
+#   equivalent: the same request in different words. The answer must not move.
+#   faulty:     one fact flipped. The answer must move to `faulty.expect`.
+#
+# A judge that moves on paraphrase is reading surface wording; a judge that
+# holds still on a flipped fact isn't reading at all. Requests are drawn from
+# the acceptance personas (lib/acceptance_personas.rb) and `open_items` mirrors
+# the active work items the maintainer persona seeds, so `duplicate_of_open_item`
+# has the same context it gets in triage.
+#
+# Expectations: probability questions use "high" (>= 0.5) or "low" (< 0.5);
+# score questions use one of the judge's labels. `thresholds` bound how far an
+# equivalent mutant may drift from the base before it counts as moved.
+#
+# Run against a live model with `rake feature_machine:calibrate_judge` (opt-in,
+# never in CI). judge_cases_test.rb only checks this file's shape.
+
+thresholds:
+  probability_drift: 0.3
+  score_drift: 0
+
+open_items:
+  - "[feature] Pin articles to the top of a public list"
+  - "[feature] Pending connection suggestions over MCP"
+  - "[feature] Webhooks for digest events"
+  - "[feature] Mark an article to reread later"
+
+cases:
+  - id: bug-stuck-drafts
+    question: bug
+    persona: drafter
+    base:
+      kind: bug
+      title: My drafts never finish fetching details
+      description: Three links have said 'Fetching details' since yesterday.
+      expect: high
+    equivalent:
+      kind: bug
+      title: Saved links stuck on 'Fetching details'
+      description: Since yesterday, three of my saved links are still showing 'Fetching details' and never fill in.
+    faulty:
+      kind: bug
+      title: Show progress while drafts fetch details
+      description: Fetching details takes a few seconds on my links. A progress bar would tell me it's working.
+      expect: low
+
+  - id: bug-csv-export
+    question: bug
+    persona: newcomer
+    base:
+      kind: feature
+      title: Export my library as CSV
+      description: I'd like to download everything I've saved as a CSV so I can keep a copy in a spreadsheet.
+      expect: low
+    equivalent:
+      kind: feature
+      title: Download my saved articles as a spreadsheet
+      description: Could there be a CSV download of my whole library? I want a backup I can open in a spreadsheet.
+    faulty:
+      kind: feature
+      title: Export my library as CSV
+      description: I downloaded everything I've saved as a CSV, but the file is empty apart from the header row.
+      expect: high
+
+  - id: duplicate-pinning
+    question: duplicate_of_open_item
+    persona: curator
+    base:
+      kind: feature
+      title: Keep my favourite articles at the top of my public page
+      description: I want two or three pieces to stay first on my public list instead of sliding down as I save new ones.
+      expect: high
+    equivalent:
+      kind: feature
+      title: Let me pin a few articles on my public list
+      description: New saves push my best pieces off the top of my public page. I'd like to fix a handful in place above everything else.
+    faulty:
+      kind: feature
+      title: Hide some articles from my public page
+      description: I want two or three pieces to stay off my public list while still being in my library.
+      expect: low
+
+  - id: duplicate-mcp-tagging
+    question: duplicate_of_open_item
+    persona: agentic
+    base:
+      kind: feature
+      title: Let agents tag articles over MCP
+      description: My agent can save and reflect on articles but has no way to add or remove tags on them.
+      expect: low
+    equivalent:
+      kind: feature
+      title: MCP tool for article tags
+      description: Agents can add articles and reflections through MCP, but there's no tool to set an article's tags.
+    faulty:
+      kind: feature
+      title: Let agents see suggested connections over MCP
+      description: My agent can create connections but has no way to list the ones the app has already suggested.
+      expect: high
+
+  - id: clarity-reading-time
+    question: clarity
+    persona: reader
+    base:
+      kind: feature
+      title: Show reading time on my public list
+      description: My newsletter subscribers click through from my public list and ask how long each piece is. A minutes estimate next to each article would let them pick what fits their time.
+      expect: High
+    equivalent:
+      kind: feature
+      title: Reading-time estimates on public list articles
+      description: People who subscribe to my newsletter browse my public list and want to know how long an article takes before opening it. Please show an estimated read time beside each one.
+    faulty:
+      kind: feature
+      title: Make my public list better
+      description: My newsletter subscribers use my public list. It could be better for them.
+      expect: Low
+
+  - id: clarity-no-description
+    question: clarity
+    persona: Edge_Case-99
+    base:
+      kind: feature
+      title: No description
+      description: ""
+      expect: Low
+    equivalent:
+      kind: feature
+      title: An idea
+      description: ""
+    faulty:
+      kind: feature
+      title: Search my reflections, not just article titles
+      description: I write a lot of reflections and can't find them later. The library search only matches titles, so I want it to match the text of my reflections too.
+      expect: High
