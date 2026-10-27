@@ -3,6 +3,9 @@
 # an admin during triage; work items relate to one another as a graph.
 class CreateWorkItems < ActiveRecord::Migration[8.1]
   def change
+    # The embedding columns below need pgvector; a fresh host may not have it yet.
+    enable_extension "vector"
+
     create_table :work_items do |t|
       t.string :title, null: false
       # feature 0, bug 1 (WorkItem#kind)

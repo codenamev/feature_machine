@@ -7,6 +7,12 @@
 # Everything under FeatureMachine:: in the host's app/ is the engine's code
 # until phase 5b moves it here; this file and lib/feature_machine/ are its
 # configuration and host seams.
+#
+# Require the runtime gems the engine names at boot (the prompts initializer
+# touches RubyLLM::Prompt). nowreading's Gemfile loads them anyway; a fresh
+# host that only adds feature_machine doesn't, and fails to boot without these.
+require "ruby_llm"
+require "neighbor"
 require_relative "feature_machine/version"
 require_relative "feature_machine/configuration"
 require_relative "feature_machine/auth"
