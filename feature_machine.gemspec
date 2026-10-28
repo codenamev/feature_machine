@@ -14,7 +14,9 @@ Gem::Specification.new do |spec|
   # this gem is only ever loaded by path from nowreading.dev.
   spec.metadata["allowed_push_host"] = "https://example.invalid"
 
-  spec.files = Dir["lib/**/*", "app/**/*", "config/**/*", "db/**/*"]
+  spec.files = Dir["lib/**/*", "app/**/*", "config/**/*", "db/**/*", "exe/*"]
+  spec.bindir = "exe"
+  spec.executables = ["feature_machine"]
 
   spec.add_dependency "rails", ">= 8.1"
   spec.add_dependency "ruby_llm"
