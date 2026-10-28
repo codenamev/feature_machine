@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*", "app/**/*", "config/**/*", "db/**/*", "exe/*"]
   spec.bindir = "exe"
-  spec.executables = ["feature_machine"]
+  spec.executables = [ "feature_machine" ]
 
   spec.add_dependency "rails", ">= 8.1"
   spec.add_dependency "ruby_llm"

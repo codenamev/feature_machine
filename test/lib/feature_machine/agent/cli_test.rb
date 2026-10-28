@@ -19,7 +19,7 @@ class FeatureMachine::Agent::CLITest < Minitest::Test
     out = StringIO.new
     err = StringIO.new
     status = FeatureMachine::Agent::CLI.start(argv, out: out, err: err, env: env)
-    [status, out.string, err.string]
+    [ status, out.string, err.string ]
   end
 
   def test_agent_loads_config_and_reports_it
