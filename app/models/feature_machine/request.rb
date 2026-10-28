@@ -38,6 +38,9 @@ module FeatureMachine
     before_save :follow_work_item, if: :will_save_change_to_work_item_id?
     before_save :stamp_shipped_at
     after_commit :enqueue_embedding, on: [ :create, :update ], if: :embedding_wanted?
+    # Hosts hear about status moves (planned, shipped, declined...) to tell the
+    # requester wherever they asked; the engine itself only shows the roadmap.
+    after_update_commit :announce_status_change, if: -> { saved_change_to_status? && ::FeatureMachine.config.on_status_change }
 
     private
 
@@ -61,6 +64,10 @@ module FeatureMachine
 
     def embedding_stale?
       saved_change_to_title? || saved_change_to_description? || embedding.nil?
+    end
+
+    def announce_status_change
+      ::FeatureMachine.config.on_status_change.call(self)
     end
 
     def enqueue_embedding

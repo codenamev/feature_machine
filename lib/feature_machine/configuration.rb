@@ -18,7 +18,8 @@ module FeatureMachine
                   :product_name, :token_help_url, :protected_resource_url,
                   :embedding_model, :drafter_model, :drafter_provider, :drafter_fallbacks,
                   :judgment_model, :roadmap_path, :bug_reports_path, :new_bug_report_path,
-                  :admin_nav_partial, :user_label, :admin_triage_path, :layout
+                  :admin_nav_partial, :user_label, :admin_triage_path, :layout,
+                  :on_status_change
 
     def initialize
       @user_class             = "User"
@@ -42,6 +43,7 @@ module FeatureMachine
       @admin_triage_path      = nil
       @product_blurb          = nil
       @layout                 = nil
+      @on_status_change       = nil
     end
 
     # The layout engine pages render through. nil (the default) means the

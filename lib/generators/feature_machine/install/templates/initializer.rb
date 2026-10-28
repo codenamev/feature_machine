@@ -58,4 +58,8 @@ FeatureMachine.configure do |config|
   # requester is named in them.
   # config.admin_nav_partial = "admin/nav"
   # config.user_label        = ->(user) { "user ##{user.id}" }
+
+  # Called with the request after each committed status change, e.g. to tell
+  # the requester. Keep it fast (enqueue a job); nil does nothing.
+  # config.on_status_change = ->(request) { StatusNoteJob.perform_later(request.id) }
 end
