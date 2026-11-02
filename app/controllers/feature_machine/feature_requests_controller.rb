@@ -1,10 +1,8 @@
-class FeatureMachine::FeatureRequestsController < ApplicationController
-  include FeatureMachine::EngineLayout
-
+class FeatureMachine::FeatureRequestsController < FeatureMachine::BaseController
   # "Your feature requests": only ever the signed-in user's own. What everyone
   # can see is the roadmap, which lists work items rather than requests.
   def index
-    @feature_requests = current_user.feature_requests.feature.includes(:work_item).newest_first
+    @feature_requests = ::FeatureMachine::Request.owned_by(feature_machine_user).feature.includes(:work_item).newest_first
   end
 
   def new
@@ -12,7 +10,7 @@ class FeatureMachine::FeatureRequestsController < ApplicationController
   end
 
   def create
-    @feature_request = current_user.feature_requests.build(feature_request_params)
+    @feature_request = ::FeatureMachine::Request.owned_by(feature_machine_user).feature.build(feature_request_params)
 
     if @feature_request.save
       redirect_to feature_requests_path, notice: "Thanks. Its status will update here."

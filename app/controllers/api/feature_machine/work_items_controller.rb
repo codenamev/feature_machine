@@ -8,7 +8,7 @@ class Api::FeatureMachine::WorkItemsController < Api::FeatureMachine::BaseContro
 
   rescue_from ::FeatureMachine::WorkItem::InvalidTransition, with: :render_invalid_transition
 
-  STATUSES = %w[planned in_progress in_review shipped].freeze
+  STATUSES = ::FeatureMachine::WorkItem::MAINTAINER_STATUSES
 
   # Defaults to the pickup queue: planned work, oldest first.
   def index

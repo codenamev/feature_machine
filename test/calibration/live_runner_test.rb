@@ -10,6 +10,9 @@ class LiveRunnerTest < Minitest::Test
   Call = Struct.new(:name)
 
   class FakeChat
+    attr_reader :approved
+
+    def approve(call) = (@approved ||= []) << call.name
     def before_tool_call(&block) = @before = block
     def after_tool_result(&block) = @after = block
 
@@ -65,6 +68,27 @@ class LiveRunnerTest < Minitest::Test
     assert_equal %w[read_file run_tests], runner.call({})[:completed]
   end
 
+  def test_progress_notes_are_approved_and_the_pull_request_is_held
+    resumes = []
+    chat = FakeChat.new
+    runner = build(
+      chat: ->(_) { chat },
+      fulfil: ->(*, **) { Result.new(status: :awaiting_approval, steps: 1, pending: [ Call.new("update_work_item") ]) },
+      resume: lambda { |_chat, max_steps:|
+        resumes << max_steps
+        Result.new(status: :awaiting_approval, steps: 2, pending: [ Call.new("update_work_item"), Call.new("open_pull_request") ])
+      }
+    )
+
+    result = runner.call({})[:result]
+
+    assert_equal [ 3 ], resumes, "resumes with what's left of max_steps"
+    assert_equal %w[update_work_item update_work_item], chat.approved
+    assert_equal :awaiting_approval, result.status
+    assert_equal %w[open_pull_request], result.pending.map(&:name)
+    assert_equal 3, result.steps
+  end
+
   def test_an_uncloneable_checkout_raises
     @config.instance_variable_set(:@checkout, File.join(@source, "missing"))
 
@@ -73,7 +97,8 @@ class LiveRunnerTest < Minitest::Test
 
   private
 
-  def build(fulfil: ->(*, **) { Result.new(status: :done, steps: 0, pending: []) }, chat: ->(_) { FakeChat.new })
-    FeatureMachine::Agent::LiveRunner.new(config: @config, seed: ->(_) { 42 }, fulfil: fulfil, chat: chat)
+  def build(fulfil: ->(*, **) { Result.new(status: :done, steps: 0, pending: []) }, chat: ->(_) { FakeChat.new },
+            resume: ->(*, **) { flunk "resumed without a routine approval" })
+    FeatureMachine::Agent::LiveRunner.new(config: @config, seed: ->(_) { 42 }, fulfil: fulfil, resume: resume, chat: chat)
   end
 end

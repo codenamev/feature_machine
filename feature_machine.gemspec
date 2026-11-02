@@ -22,4 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 8.1"
   spec.add_dependency "ruby_llm"
   spec.add_dependency "neighbor"
+  # The API's views are jbuilder, and the agent's tools are served over MCP.
+  spec.add_dependency "jbuilder"
+  spec.add_dependency "mcp", ">= 1.6"
 end

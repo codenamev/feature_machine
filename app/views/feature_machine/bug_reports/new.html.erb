@@ -1,0 +1,83 @@
+<% product = FeatureMachine.config.product_name %>
+<% errors = @bug_report.errors %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-default" %>
+<% field_class = "cn-field grid group/field w-full" %>
+<% label_class = "cn-label flex items-center select-none cn-field-label group/field-label peer/field-label flex w-fit items-center" %>
+<% hint_class = "cn-field-description [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 font-normal leading-normal" %>
+<% content_for :title, "Report a bug — #{product}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <%= render "feature_machine/flash" %>
+  <header class="page-header">
+    <p class="page-header__eyebrow">Roadmap</p>
+    <h1 class="page-header__title">Report a bug</h1>
+    <p class="page-header__lede">
+      Tell us what went wrong. Bug reports stay private, since they can
+      describe your data; you can follow yours under
+      <%= link_to "your bug reports", bug_reports_path %>.
+      <%= link_to "Requesting a feature instead?", new_feature_request_path %>
+    </p>
+  </header>
+
+  <%# Plain form_with: the same Field / Input / Textarea / Button markup the
+      host's Poetry builder renders, written out so the engine carries no
+      dependency on the host's UI kit. Field order inside each cn-field:
+      label, control, hint, error. aria-required rides the label-station
+      rule (never the native attribute); aria-describedby points at the
+      hint and, on a bounce, the error. %>
+  <%= form_with(model: @bug_report, scope: :bug_report, url: bug_reports_path, class: "flex max-w-xl flex-col gap-5") do |form| %>
+    <% if errors.any? %>
+      <div data-slot="alert" data-variant="destructive" role="alert" class="cn-alert relative w-full group/alert cn-alert-variant-destructive">
+        <div data-slot="alert-title" class="cn-alert-title [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">That didn't go through</div>
+        <div data-slot="alert-description" class="cn-alert-description [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">
+          <ul class="list-inside list-disc">
+            <% errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <% title_errors = errors[:title] %>
+    <div data-slot="field" data-invalid="<%= title_errors.any? %>" class="<%= field_class %>">
+      <%= form.label :title, class: label_class, data: { slot: "field-label" } %>
+      <%= form.text_field :title,
+            class: "cn-input w-full min-w-0 outline-none",
+            placeholder: "e.g. Saving the form leaves the title blank",
+            maxlength: 120, minlength: 8, autofocus: true,
+            "aria-required": true,
+            "aria-invalid": (true if title_errors.any?),
+            "aria-describedby": ["bug_report_title_hint", ("bug_report_title_error" if title_errors.any?)].compact.join(" ") %>
+      <p id="bug_report_title_hint" data-slot="field-description" class="<%= hint_class %>">One line naming what went wrong.</p>
+      <% if title_errors.any? %>
+        <p id="bug_report_title_error" data-slot="field-error" class="cn-field-error font-normal"><%= title_errors.to_sentence %></p>
+      <% end %>
+    </div>
+
+    <% description_errors = errors[:description] %>
+    <div data-slot="field" data-invalid="<%= description_errors.any? %>" class="<%= field_class %>">
+      <%= form.label :description, class: label_class, data: { slot: "field-label" } %>
+      <%= form.text_area :description,
+            class: "cn-textarea flex field-sizing-content min-h-16 w-full outline-none",
+            rows: 6, maxlength: 2000,
+            placeholder: "What did you do, what did you expect, and what happened instead?",
+            "aria-invalid": (true if description_errors.any?),
+            "aria-describedby": ["bug_report_description_hint", ("bug_report_description_error" if description_errors.any?)].compact.join(" ") %>
+      <p id="bug_report_description_hint" data-slot="field-description" class="<%= hint_class %>">Include the page you were on, if it helps.</p>
+      <% if description_errors.any? %>
+        <p id="bug_report_description_error" data-slot="field-error" class="cn-field-error font-normal"><%= description_errors.to_sentence %></p>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" name="commit" value="Report it" data-slot="button" data-variant="default" data-size="default"
+              class="<%= button %> cn-button-variant-default"><span data-slot="label" class="contents">Report it</span></button>
+      <a href="<%= bug_reports_path %>" data-slot="button" data-variant="ghost" data-size="default"
+         class="<%= button %> cn-button-variant-ghost"><span data-slot="label" class="contents">Back to your reports</span></a>
+    </div>
+  <% end %>
+</div>

@@ -12,6 +12,7 @@
 <% similar = @work_item.similar %>
 
 <div class="container">
+  <%= render "feature_machine/flash" %>
   <header class="page-header">
     <p class="page-header__eyebrow">Admin · <%= work_kind_label(@work_item) %></p>
     <h1 class="page-header__title"><%= @work_item.title %></h1>

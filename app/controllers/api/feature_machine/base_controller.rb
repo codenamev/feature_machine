@@ -1,16 +1,54 @@
 # The engine's API controllers authenticate from the Rack env, never from the
 # host's token model: FeatureMachine::Auth::Bearer (or the host's own
 # middleware) has already put a credential at FeatureMachine::ENV_KEY. The
-# error shape, rate-limit and link headers still come from the host's
-# Api::BaseController; the prose in 401/403 bodies comes from
-# FeatureMachine.config.
-class Api::FeatureMachine::BaseController < Api::BaseController
+# prose in 401/403 bodies comes from FeatureMachine.config.
+#
+# The parent is config.api_parent_controller (ActionController::API by
+# default). A host base that already renders errors its own way (render_error,
+# not-found and missing-parameter handling) keeps it; the fallbacks below only
+# fill in what the parent lacks, so a fresh host's API works with no base of
+# its own.
+class Api::FeatureMachine::BaseController < FeatureMachine.config.api_parent_controller.constantize
+  inherited_private = ->(name) { private_method_defined?(name) || method_defined?(name) }
+
+  unless inherited_private.(:render_error)
+    rescue_from ActiveRecord::RecordNotFound do
+      render_error(status: :not_found, error: "Not found", code: "not_found",
+                   resolution: "Verify the resource id belongs to the authenticated user.")
+    end
+    rescue_from ActionController::ParameterMissing do |exception|
+      render_error(status: :bad_request, error: exception.message, code: "parameter_missing",
+                   resolution: "Include the required parameter in the request body.")
+    end
+  end
+
   private
 
+  # Engine-owned names: a host base's own current_user or current_credential
+  # is left alone, and never stands in for the engine's.
+  attr_reader :api_user, :api_credential
+
+  unless inherited_private.(:render_error)
+    def render_error(status:, error:, code:, resolution: nil, errors: nil)
+      body = { error: error, code: code }
+      body[:resolution] = resolution if resolution
+      body[:errors] = errors if errors
+      render json: body, status: status
+    end
+  end
+
+  # Reads need `read`, writes need `write`; the work-item hand-off overrides
+  # it with `maintainer`.
+  unless inherited_private.(:required_scope)
+    def required_scope
+      request.get? || request.head? ? ::FeatureMachine::READ : ::FeatureMachine::WRITE
+    end
+  end
+
   def authenticate_user_with_token
-    @current_credential = request.env[::FeatureMachine::ENV_KEY]
-    @current_user = @current_credential&.user
-    return render_unauthenticated unless @current_user
+    @api_credential = request.env[::FeatureMachine::ENV_KEY]
+    @api_user = @api_credential&.user
+    return render_unauthenticated unless @api_user
     return render_session_write_forbidden if session_credential? && !(request.get? || request.head?)
 
     enforce_scope
@@ -19,7 +57,7 @@ class Api::FeatureMachine::BaseController < Api::BaseController
   # The engine's rule, not the credential's: for `maintainer`, the host's admin
   # predicate must agree (FeatureMachine::Auth.allows?).
   def enforce_scope
-    return if ::FeatureMachine::Auth.allows?(current_credential, required_scope)
+    return if ::FeatureMachine::Auth.allows?(api_credential, required_scope)
 
     response.headers["WWW-Authenticate"] =
       %(Bearer realm="#{feature_machine_config.product_name}", error="insufficient_scope", scope="#{required_scope}")
@@ -58,7 +96,7 @@ class Api::FeatureMachine::BaseController < Api::BaseController
   end
 
   def session_credential?
-    current_credential.respond_to?(:session?) && current_credential.session?
+    api_credential.respond_to?(:session?) && api_credential.session?
   end
 
   def create_token_hint

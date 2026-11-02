@@ -1,8 +1,6 @@
 # Per-request triage decisions: move a request into or out of a work item,
 # decline it with a note, or reopen it.
-class FeatureMachine::Admin::FeatureRequestsController < ::Admin::BaseController
-  include FeatureMachine::EngineLayout
-
+class FeatureMachine::Admin::FeatureRequestsController < FeatureMachine::Admin::BaseController
   # The only statuses an admin sets on a request directly; every other status
   # comes from its work item.
   DIRECT_STATUSES = %w[requested declined].freeze

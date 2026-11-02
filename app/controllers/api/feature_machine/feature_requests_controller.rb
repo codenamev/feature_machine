@@ -4,11 +4,11 @@ class Api::FeatureMachine::FeatureRequestsController < Api::FeatureMachine::Base
   before_action :authenticate_user_with_token
 
   def index
-    @feature_requests = current_user.feature_requests.feature.includes(:user, :work_item).newest_first
+    @feature_requests = ::FeatureMachine::Request.owned_by(api_user).feature.includes(:user, :work_item).newest_first
   end
 
   def create
-    @feature_request = current_user.feature_requests.build(feature_request_params)
+    @feature_request = ::FeatureMachine::Request.owned_by(api_user).feature.build(feature_request_params)
 
     if @feature_request.save
       render :show, status: :created

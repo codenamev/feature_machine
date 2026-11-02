@@ -1,7 +1,7 @@
 require "yaml"
 
 module FeatureMachine
-  # Runs the mutation calibration cases (test/calibration/judge_cases.yml)
+  # Runs the mutation calibration cases (calibration/judge_cases.yml)
   # through a judge and says which ones it got wrong. Three checks per case:
   #
   #   base        lands on base.expect
@@ -14,7 +14,7 @@ module FeatureMachine
   # judgment_model, so `rake feature_machine:calibrate_judge` costs real tokens.
   # Tests pass a fake.
   class JudgeCalibration
-    CASES_PATH = File.expand_path("../../test/calibration/judge_cases.yml", __dir__)
+    CASES_PATH = File.expand_path("calibration/judge_cases.yml", __dir__)
     SCORE_LEVELS = %w[Low Mid High].freeze
     Request = Struct.new(:kind, :title, :description, keyword_init: true)
     Check = Struct.new(:case_id, :variant, :ok, :detail, keyword_init: true)
@@ -25,7 +25,7 @@ module FeatureMachine
 
     def initialize(file, judge: nil)
       @file = file
-      @judge = judge || ->(text, context) { Judge.judge(text, context: context) }
+      @judge = judge || ->(text, open_items) { Judge.judge_text(text, open_items) }
     end
 
     def run

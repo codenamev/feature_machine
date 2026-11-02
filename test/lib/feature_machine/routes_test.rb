@@ -11,6 +11,7 @@ class FeatureMachine::RoutesTest < ActiveSupport::TestCase
       namespace :api, defaults: { format: :json } do
         feature_machine_routes :api
       end
+      feature_machine_routes :mcp
     end
   end
 
@@ -33,6 +34,18 @@ class FeatureMachine::RoutesTest < ActiveSupport::TestCase
     assert_equal "/api/work_items/5", helpers.api_work_item_path(5)
     assert_equal "/admin/work_items", helpers.admin_work_items_path
     assert_equal "/feature-requests/new", helpers.new_feature_request_path
+  end
+
+  test "draws the engine's own roadmap, bug reports, triage, maintainer export and MCP endpoint" do
+    helpers = @routes.url_helpers
+    assert_equal "/roadmap", helpers.roadmap_path
+    assert_equal "/bug-reports/new", helpers.new_bug_report_path
+    assert_equal "/admin/triage", helpers.admin_triage_path
+    assert_equal "/admin/attachments", helpers.admin_attachments_path
+    assert_equal "/api/roadmap", helpers.api_roadmap_path
+    assert_equal "/api/bug_reports", helpers.api_bug_reports_path
+    assert_equal "/api/maintainer/feature_requests", helpers.api_maintainer_feature_requests_path
+    assert_equal "/mcp", helpers.feature_machine_mcp_path
   end
 
   test "rejects an unknown scope" do

@@ -27,6 +27,6 @@ end
 json.evidence work_item.feature_requests.sort_by(&:created_at) do |feature_request|
   json.title       feature_request.title
   json.description feature_request.description
-  json.requested_by feature_request.user.handle
+  json.requested_by FeatureMachine.config.label_for(feature_request.user)
   json.requested_at feature_request.created_at.iso8601
 end

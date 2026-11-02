@@ -1,12 +1,4 @@
-# The engine's HTML controllers inherit the host's ApplicationController. The
-# dummy stands in for it with the one thing they call: current_user, resolved
-# through the engine's own config hook rather than a host auth concern.
+# A fresh host's ApplicationController, and nothing more: no current_user, no
+# admin base, no API base. The engine has to bring everything else itself.
 class ApplicationController < ActionController::Base
-  helper_method :current_user
-
-  private
-
-  def current_user
-    @current_user ||= FeatureMachine.config.user_for(request)
-  end
 end

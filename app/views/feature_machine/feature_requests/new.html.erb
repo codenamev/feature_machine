@@ -11,6 +11,7 @@
 <% end %>
 
 <div class="container">
+  <%= render "feature_machine/flash" %>
   <header class="page-header">
     <p class="page-header__eyebrow">Roadmap</p>
     <h1 class="page-header__title">Request a feature</h1>
@@ -47,7 +48,7 @@
       <%= form.label :title, class: label_class, data: { slot: "field-label" } %>
       <%= form.text_field :title,
             class: "cn-input w-full min-w-0 outline-none",
-            placeholder: "e.g. Let me tag an article as 'reread later'",
+            placeholder: "e.g. Let me export my data as a CSV file",
             maxlength: 120, minlength: 8, autofocus: true,
             "aria-required": true,
             "aria-invalid": (true if title_errors.any?),

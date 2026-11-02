@@ -17,9 +17,23 @@ module FeatureMachine
     attr_accessor :user_class, :current_user, :admin, :authenticate_api, :session_auth,
                   :product_name, :token_help_url, :protected_resource_url,
                   :embedding_model, :drafter_model, :drafter_provider, :drafter_fallbacks,
-                  :judgment_model, :roadmap_path, :bug_reports_path, :new_bug_report_path,
+                  :judgment_model, :judgment_provider, :roadmap_path, :bug_reports_path, :new_bug_report_path,
                   :admin_nav_partial, :user_label, :admin_triage_path, :layout,
-                  :on_status_change
+                  :on_status_change, :parent_controller, :admin_parent_controller,
+                  :api_parent_controller, :sign_in_path, :flash_in_pages
+
+    # The engine's own pages, linked by default. A host that draws its own
+    # roadmap or bug board points these at it instead, or sets nil to drop the
+    # link. respond_to? keeps a link out when its route isn't drawn.
+    DEFAULT_ROADMAP_PATH = lambda do |view, work_item = nil|
+      view.roadmap_path(anchor: (view.dom_id(work_item) if work_item)) if view.respond_to?(:roadmap_path)
+    end
+    DEFAULT_BUG_REPORTS_PATH     = ->(view) { view.bug_reports_path if view.respond_to?(:bug_reports_path) }
+    DEFAULT_NEW_BUG_REPORT_PATH  = ->(view) { view.new_bug_report_path if view.respond_to?(:new_bug_report_path) }
+    DEFAULT_ADMIN_TRIAGE_PATH    = ->(view) { view.admin_triage_path if view.respond_to?(:admin_triage_path) }
+    # Where a signed-out visitor to an engine page is sent, given the
+    # controller. Rails' authentication generator draws new_session_path.
+    DEFAULT_SIGN_IN_PATH         = ->(controller) { controller.new_session_path if controller.respond_to?(:new_session_path) }
 
     def initialize
       @user_class             = "User"
@@ -35,15 +49,32 @@ module FeatureMachine
       @drafter_provider       = nil
       @drafter_fallbacks      = []
       @judgment_model         = nil
-      @roadmap_path           = nil
-      @bug_reports_path       = nil
-      @new_bug_report_path    = nil
+      @judgment_provider      = nil
+      @roadmap_path           = DEFAULT_ROADMAP_PATH
+      @bug_reports_path       = DEFAULT_BUG_REPORTS_PATH
+      @new_bug_report_path    = DEFAULT_NEW_BUG_REPORT_PATH
       @admin_nav_partial      = nil
       @user_label             = ->(user) { "user ##{user.id}" }
-      @admin_triage_path      = nil
+      @admin_triage_path      = DEFAULT_ADMIN_TRIAGE_PATH
       @product_blurb          = nil
       @layout                 = nil
       @on_status_change       = nil
+      @parent_controller      = "ApplicationController"
+      @admin_parent_controller = nil
+      @api_parent_controller  = "ActionController::API"
+      @sign_in_path           = DEFAULT_SIGN_IN_PATH
+      @flash_in_pages         = true
+    end
+
+    # The classes engine controllers inherit from, named as strings so the
+    # initializer never autoloads app code. Pages inherit the host's
+    # ApplicationController (its layout, its auth filters); admin pages inherit
+    # admin_parent_controller, falling back to the same; the API inherits
+    # ActionController::API unless the host has its own base for error shape,
+    # rate-limit headers and the like. The engine adds its own admin check and
+    # token auth on top of whichever it gets.
+    def admin_parent_controller
+      @admin_parent_controller || parent_controller
     end
 
     # The layout engine pages render through. nil (the default) means the
@@ -61,10 +92,10 @@ module FeatureMachine
       @product_blurb.to_s.empty? ? product_name : @product_blurb
     end
 
-    # Optional host links the engine's views offer: a lambda given the view
-    # context (so it can call the host's route helpers) plus any record the
-    # link is about, returning a path, or nil to leave the link out. The
-    # engine never names a host route itself.
+    # Links the engine's views offer: a lambda given the view context plus any
+    # record the link is about, returning a path, or nil to leave the link out.
+    # They default to the engine's own pages (DEFAULT_*_PATH); a host with its
+    # own roadmap or bug board points them there.
     #
     #   admin_triage_path:   ->(view) { ... }                  the host's triage inbox
     #   roadmap_path:        ->(view, work_item = nil) { ... } the roadmap, anchored on an item if given
@@ -104,8 +135,12 @@ module FeatureMachine
       !drafter_model.nil?
     end
 
-    # Any RubyLLM chat model name. nil turns judging off: triage shows the
+    # A RubyLLM model whose provider does structured judgments (OpenAI,
+    # Ollama, or TypeSafe's Jev, which OpenRouter also serves). nil turns judging off: triage shows the
     # similarity buckets unranked, with no bug/duplicate/clarity flags.
+    # judgment_provider names the provider outright, for a model id the
+    # registry doesn't know, such as one on a local Jev-compatible server
+    # (:typesafe with RubyLLM's typesafe_api_base pointed at it).
     def judge?
       !judgment_model.nil?
     end

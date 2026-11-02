@@ -5,17 +5,27 @@ require_relative "../../../../lib/feature_machine/agent/fulfiller"
 
 class FeatureMachine::Agent::FulfillerTest < Minitest::Test
   # Each step pops the next state: :working, :waiting, or :complete.
-  class ScriptedChat
-    attr_reader :staged, :steps, :models
+  Message = Struct.new(:role, :content)
+  Call = Struct.new(:name, :arguments)
 
-    def initialize(*states)
+  class ScriptedChat
+    attr_reader :staged, :steps, :models, :messages
+
+    # handed_off: the run already handed the item off, as most do.
+    def initialize(*states, handed_off: true)
       @states = states
       @state = :working
       @steps = 0
       @models = [ :plan ]
+      @messages = []
+      @feature_machine_handed_off = handed_off
     end
 
-    def ask_later(text) = (@staged = text) && self
+    def ask_later(text)
+      @messages << Message.new(:user, text)
+      @state = :working unless @staged.nil?
+      (@staged ||= text) && self
+    end
     def with_model(model) = (@models << model) && self
     def step
       @steps += 1
@@ -40,6 +50,59 @@ class FeatureMachine::Agent::FulfillerTest < Minitest::Test
     assert_equal "Fulfil work item 42.", chat.staged
     assert_equal :done, result.status
     assert_equal 2, result.steps
+  end
+
+  def test_a_run_that_ends_without_a_hand_off_is_nudged_once
+    chat = ScriptedChat.new(:complete, :complete, handed_off: false)
+    result = Fulfiller.run(chat, item_id: 1, max_steps: 5)
+
+    assert_equal :done, result.status
+    assert_equal 2, result.steps, "one more turn after the nudge, then it stops"
+    assert_equal 1, chat.messages.count { |m| m.content == Fulfiller::NUDGE }
+  end
+
+  def test_finishing_on_the_last_step_is_done_not_a_step_limit
+    chat = ScriptedChat.new(:working, :complete, handed_off: false)
+    result = Fulfiller.run(chat, item_id: 1, max_steps: 2)
+
+    assert_equal :done, result.status
+    assert chat.messages.none? { |m| m.content == Fulfiller::NUDGE }, "no steps left to answer a nudge"
+  end
+
+  def test_a_prose_plan_goes_to_the_implement_model_with_the_nudge_unspent
+    chat = ScriptedChat.new(:complete, :complete, :complete, handed_off: false)
+    result = Fulfiller.run(chat, item_id: 1, max_steps: 6, implement_model: :impl)
+
+    assert_equal :done, result.status
+    assert_equal %i[plan impl], chat.models
+    assert_equal [ "Fulfil work item 1.", Fulfiller::CONTINUE, Fulfiller::NUDGE ], chat.messages.map(&:content)
+  end
+
+  # The hand-off is read from what the tools returned, through the chat's
+  # own callbacks: a refused or failed call is not a hand-off.
+  class CallbackChat
+    def before_tool_call(&block) = @before = block
+    def after_tool_result(&block) = @after = block
+    def handed_off? = instance_variable_get(:@feature_machine_handed_off) == true
+
+    def run_tool(name, arguments, result)
+      @before.call(Call.new(name, arguments))
+      @after.call(result)
+      self
+    end
+  end
+  McpResult = Struct.new(:error) { def error? = error }
+
+  def tracked = CallbackChat.new.tap { |chat| Fulfiller.send(:track_hand_off, chat) }
+
+  def test_only_a_hand_off_that_went_through_counts
+    blocked = { "progress_note" => "Blocked: no criteria" }
+    refute tracked.run_tool("open_pull_request", {}, { "error" => "judge rejected the change" }).handed_off?
+    refute tracked.run_tool("open_pull_request", {}, { "exit_status" => 1, "output" => "no GitHub remote" }).handed_off?
+    refute tracked.run_tool("update_work_item", blocked, McpResult.new(true)).handed_off?
+    refute tracked.run_tool("update_work_item", { "progress_note" => "Halfway there" }, McpResult.new(false)).handed_off?
+    assert tracked.run_tool("update_work_item", blocked, McpResult.new(false)).handed_off?
+    assert tracked.run_tool("open_pull_request", {}, { "exit_status" => 0, "output" => "https://github.com/o/r/pull/1" }).handed_off?
   end
 
   def test_pauses_for_approval

@@ -2,7 +2,7 @@ require "ruby_llm"
 
 module FeatureMachine
   module Agent
-    # Scores Fulfiller runs against test/calibration/agent_cases.yml with Ruby
+    # Scores Fulfiller runs against calibration/agent_cases.yml with Ruby
     # assertions only: no model grades the outcome, so a pass means the gates
     # held, not that a reviewer liked the prose.
     #
@@ -10,7 +10,7 @@ module FeatureMachine
     #   { result: Fulfiller::Result, completed: [tool names that went through] }
     # Live runs pass a runner against the dummy app; tests pass a fake.
     class Evaluation < RubyLLM::Evaluation
-      CASES_PATH = File.expand_path("../../../test/calibration/agent_cases.yml", __dir__)
+      CASES_PATH = File.expand_path("../calibration/agent_cases.yml", __dir__)
 
       dataset CASES_PATH
       evaluator false

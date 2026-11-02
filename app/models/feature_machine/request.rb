@@ -13,6 +13,19 @@ module FeatureMachine
 
     # Phase 2 keeps the public surface unchanged: params keys, dom_id,
     # polymorphic route helpers and i18n keys all still read `feature_request`.
+    # Requests filed before embeddings were switched on never got one, and
+    # triage leaves them out of every group. Embeds each one now, in this
+    # process: queued jobs would die with a rake task on an in-process
+    # adapter. Returns how many it filled; the rest stay nil, as a failed
+    # call leaves them.
+    def self.backfill_embeddings
+      return 0 unless ::FeatureMachine.config.embeddings?
+
+      ids = unembedded.ids
+      ids.each { |id| RequestEmbeddingJob.perform_now(id) }
+      ids.size - unembedded.where(id: ids).count
+    end
+
     def self.model_name
       @_model_name ||= ActiveModel::Name.new(self, nil, "FeatureRequest")
     end
@@ -32,6 +45,10 @@ module FeatureMachine
     scope :newest_first, -> { order(created_at: :desc) }
     scope :oldest_first, -> { order(created_at: :asc) }
     scope :embedded,     -> { where.not(embedding: nil) }
+    scope :unembedded,   -> { where(embedding: nil) }
+    # One requester's own requests. The engine never asks the host's user
+    # model for an association, so a host needs no has_many to adopt it.
+    scope :owned_by,     ->(user) { where(user: user) }
     # Still waiting for an admin: not bucketed into a work item, not declined.
     scope :untriaged,    -> { requested.where(work_item_id: nil) }
 
