@@ -1,0 +1,5 @@
+test:
+  adapter: postgresql
+  encoding: unicode
+  url: <%= ENV["DATABASE_URL"] %>
+  database: feature_machine_dummy_test

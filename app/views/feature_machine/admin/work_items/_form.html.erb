@@ -1,0 +1,78 @@
+<% errors = work_item.errors %>
+<% prefix = work_item.model_name.param_key %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-default" %>
+<% field_class = "cn-field grid group/field w-full" %>
+<% label_class = "cn-label flex items-center select-none cn-field-label group/field-label peer/field-label flex w-fit items-center" %>
+<% hint_class = "cn-field-description [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 font-normal leading-normal" %>
+<% input_class = "cn-input w-full min-w-0 outline-none" %>
+<% textarea_class = "cn-textarea flex field-sizing-content min-h-16 w-full outline-none" %>
+<% select_class = "cn-native-select w-full appearance-none outline-none disabled:pointer-events-none disabled:cursor-not-allowed" %>
+<%# The spec, one field per row: [attribute, control, hint, options]. Hints are
+    the engine's own words about its own columns, so they live here, not in
+    the host. %>
+<% fields = [
+  [ :title, :input, "The capability or fix in the product's terms, not a user's quote.", { maxlength: 120, required: true } ],
+  [ :kind, :select, nil, { choices: [ [ "Feature", "feature" ], [ "Bug", "bug" ] ] } ],
+  [ :status, :select, "Draft is private. Planned, in progress and shipped appear on the roadmap. In review shows to users as in progress.", { choices: work_item_status_options } ],
+  [ :summary, :textarea, "Shown on the roadmap. One or two sentences on what changes for users. Required before this leaves draft.", { rows: 3 } ],
+  [ :problem, :textarea, "Who hits this and what they are trying to do.", { rows: 6 } ],
+  [ :scope, :textarea, "What is in, and what was asked for but is deliberately out.", { rows: 6 } ],
+  [ :acceptance_criteria, :textarea, "Checkable statements of done, one per line.", { rows: 6 } ],
+  [ :pull_request_url, :input, "Usually set by the agent that opens it. Required for In review.", { label: "Pull request", placeholder: "https://github.com/owner/repo/pull/123" } ],
+  [ :progress_note, :textarea, "Shown on the roadmap and on every request attached to this item.", { rows: 3 } ]
+] %>
+
+<%# Plain form_with on the same Field / Input / Textarea / NativeSelect / Alert /
+    Button markup the host's Poetry builder renders, written out so the engine
+    carries no dependency on the host's UI kit (the 4a-ii pattern). Inside each
+    cn-field: label, control, hint, error. aria-describedby points at the hint
+    and, on a bounce, the error; aria-required rides the control. %>
+<%= form_with(model: [ :admin, work_item ], class: "flex max-w-xl flex-col gap-5") do |form| %>
+  <% if errors.any? %>
+    <div data-slot="alert" data-variant="destructive" role="alert" class="cn-alert relative w-full group/alert cn-alert-variant-destructive">
+      <div data-slot="alert-title" class="cn-alert-title [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">That didn't save</div>
+      <div data-slot="alert-description" class="cn-alert-description [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3">
+        <ul class="list-inside list-disc">
+          <% errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+
+  <% fields.each do |method, control, hint, options| %>
+    <% field_errors = errors[method] %>
+    <% hint_id = "#{prefix}_#{method}_hint" if hint %>
+    <% error_id = "#{prefix}_#{method}_error" if field_errors.any? %>
+    <% aria = { invalid: (true if field_errors.any?), required: (true if options[:required]),
+                describedby: [ hint_id, error_id ].compact.join(" ").presence }.compact %>
+    <div data-slot="field" data-invalid="<%= field_errors.any? %>" class="<%= field_class %>">
+      <%= form.label method, options[:label], class: label_class, data: { slot: "field-label" } %>
+      <% case control %>
+      <% when :input %>
+        <%= form.text_field method, class: input_class, maxlength: options[:maxlength], placeholder: options[:placeholder], aria: aria %>
+      <% when :textarea %>
+        <%= form.text_area method, class: textarea_class, rows: options[:rows], aria: aria %>
+      <% when :select %>
+        <%# A real <select> on the host's cn-native-select hooks: platform picker and submission stay native. %>
+        <span data-slot="native-select-wrapper" data-size="default" class="relative w-full has-[select:disabled]:opacity-50 group/native-select">
+          <%= form.select method, options[:choices], {}, class: select_class, data: { slot: "native-select", size: "default" }, aria: aria %>
+        </span>
+      <% end %>
+      <% if hint %>
+        <p id="<%= hint_id %>" data-slot="field-description" class="<%= hint_class %>"><%= hint %></p>
+      <% end %>
+      <% if field_errors.any? %>
+        <p id="<%= error_id %>" data-slot="field-error" class="cn-field-error font-normal"><%= field_errors.to_sentence %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" name="commit" value="Save work item" data-slot="button" data-variant="default" data-size="default"
+            class="<%= button %> cn-button-variant-default"><span data-slot="label" class="contents">Save work item</span></button>
+    <a href="<%= work_item.persisted? ? admin_work_item_path(work_item) : admin_work_items_path %>" data-slot="button" data-variant="ghost" data-size="default"
+       class="<%= button %> cn-button-variant-ghost"><span data-slot="label" class="contents">Cancel</span></a>
+  </div>
+<% end %>
