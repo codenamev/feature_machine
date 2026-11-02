@@ -12,7 +12,7 @@ module FeatureMachine
   #
   # A credential is any object answering `user` and `allows?(scope)` for the
   # scopes in FeatureMachine::SCOPES. The host's token model never has to be
-  # known to the engine: nowreading's ApiCredential already answers both.
+  # known to the engine.
   class Configuration
     attr_accessor :user_class, :current_user, :admin, :authenticate_api, :session_auth,
                   :product_name, :token_help_url, :protected_resource_url,
