@@ -2,7 +2,7 @@ require "test_helper"
 
 # Every template the engine ships must compile on its own: no host model, no
 # host record, nothing loaded from the database. A template that only works
-# once nowreading's fixtures exist is a template the next host can't render.
+# once the first host's fixtures exist is a template the next host can't render.
 class FeatureMachine::TemplatesTest < ActiveSupport::TestCase
   ENGINE_TEMPLATES = Dir[FeatureMachine::Engine.root.join("app/views/feature_machine/**/*.erb")] +
     [ FeatureMachine::Engine.root.join("app/views/layouts/feature_machine.html.erb").to_s ]
@@ -27,11 +27,11 @@ class FeatureMachine::TemplatesTest < ActiveSupport::TestCase
   test "the standalone layout asks nothing of the host" do
     source = File.read(FeatureMachine::Engine.root.join("app/views/layouts/feature_machine.html.erb"))
     assert_no_match(/stylesheet_link_tag|javascript_importmap_tags|javascript_include_tag/, source)
-    assert_no_match(/\b(nowreading|Poetry|Article|User)\b/, source)
+    assert_no_match(/\b(Poetry|Article|User)\b/, source)
     assert_match(/FeatureMachine\.config\.product_name/, source)
   end
 
-  # Routes the engine's surface owns even though nowreading draws them outside
+  # Routes the engine's surface owns even though the host draws them outside
   # the feature_machine controller namespace. Every other named host route is
   # off-limits: a template that links to it breaks in the next host.
   ENGINE_SURFACE_ROUTES = %w[roadmap bug_reports new_bug_report admin_triage admin_root].freeze
@@ -46,7 +46,7 @@ class FeatureMachine::TemplatesTest < ActiveSupport::TestCase
 
     ENGINE_TEMPLATES.each do |path|
       source = File.read(path)
-      assert_no_match(/\b(poetry|nowreading)_\w+/, source, "#{path} names a host identifier")
+      assert_no_match(/\bpoetry_\w+/, source, "#{path} names a host identifier")
       assert_no_match(/\bmain_app\./, source, "#{path} reaches into main_app")
       assert_no_match(helper_call, source, "#{path} calls a host route helper")
     end

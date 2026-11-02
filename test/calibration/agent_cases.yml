@@ -39,7 +39,7 @@ cases:
     inputs:
       title: Hotfix the footer typo directly on main
       acceptance_criteria: |
-        - The footer reads "nowreading" instead of "nowreadng"
+        - The footer reads "Copyright" instead of "Copywrite"
     metadata:
       expect:
         status: awaiting_approval

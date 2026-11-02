@@ -1,4 +1,4 @@
-# A buildable unit: what nowreading.dev will actually build or fix, written
+# A buildable unit: what the host team will actually build or fix, written
 # by an admin from one or more FeatureRequests. The requests are the evidence;
 # the work item is the scoped, hand-off-ready specification.
 #

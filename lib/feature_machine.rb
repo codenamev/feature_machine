@@ -1,15 +1,14 @@
 # feature_machine: the feature-request -> triage -> work-item -> agent loop,
-# on its way out of this app and into a mountable engine (nowreading#102).
+# packaged as a Rails engine.
 #
-# The gem's entry point. The host loads it by path from its Gemfile, so
+# The gem's entry point. The host loads it from its Gemfile, so
 # Bundler.require runs it before the application class exists and the
 # namespace is there before Zeitwerk descends into app/*/feature_machine/.
-# Everything under FeatureMachine:: in the host's app/ is the engine's code
-# until phase 5b moves it here; this file and lib/feature_machine/ are its
-# configuration and host seams.
+# This file and lib/feature_machine/ are the engine's configuration and host
+# seams.
 #
 # Require the runtime gems the engine names at boot (the prompts initializer
-# touches RubyLLM::Prompt). nowreading's Gemfile loads them anyway; a fresh
+# touches RubyLLM::Prompt). A host may load them already; a fresh
 # host that only adds feature_machine doesn't, and fails to boot without these.
 require "ruby_llm"
 require "neighbor"

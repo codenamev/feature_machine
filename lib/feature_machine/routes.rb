@@ -2,7 +2,7 @@ require "action_dispatch/routing/mapper"
 
 module FeatureMachine
   # The engine's routes, drawn into the host's own route set rather than
-  # mounted (nowreading#102, phase 5e-ii). The engine isn't isolated, so its
+  # mounted. The engine isn't isolated, so its
   # controllers and views use the host's unprefixed helpers
   # (feature_requests_path, admin_work_items_path); a mount would move those
   # onto an engine proxy. The host calls the macro once per scope, inside the
@@ -16,8 +16,8 @@ module FeatureMachine
   #     feature_machine_routes :api
   #   end
   #
-  # Paths, controllers and helper names are exactly what nowreading drew by
-  # hand before the macro existed.
+  # Paths, controllers and helper names match what the first host drew by
+  # hand before the macro existed, so adopting it changes no URLs.
   module Routes
     SCOPES = %i[ web admin api ].freeze
 
