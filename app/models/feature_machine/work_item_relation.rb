@@ -1,6 +1,5 @@
-# An edge in the work-item graph: how two buildable units relate. Mirrors
-# Connection for articles, but the vocabulary is about delivery order and
-# containment rather than ideas.
+# An edge in the work-item graph: how two buildable units relate, in the
+# vocabulary of delivery order and containment.
 module FeatureMachine
   class WorkItemRelation < ApplicationRecord
     self.table_name = "work_item_relations"

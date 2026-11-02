@@ -107,14 +107,15 @@ module FeatureMachine
     end
 
     # nil when judging is off or the model fails: the bucket still shows,
-    # just unranked and unflagged.
+    # just unranked and unflagged. A missing provider key or an unknown model
+    # name counts as failing; RubyLLM raises those outside RubyLLM::Error.
     def judgment_for(request)
       return nil unless @judge
 
       Rails.cache.fetch([ "feature_machine", "judgment", request.id, request.updated_at.to_i ], expires_in: JUDGMENT_TTL) do
         answers_hash(Judge.for(request))
       end
-    rescue RubyLLM::Error => e
+    rescue RubyLLM::Error, RubyLLM::ConfigurationError, RubyLLM::ModelNotFoundError => e
       Rails.logger.warn("FeatureMachine::Judge failed for request #{request.id}: #{e.message}")
       nil
     end

@@ -49,7 +49,32 @@ class FeatureMachine::Agent::ToolsTest < Minitest::Test
   def test_only_opening_a_pull_request_needs_approval
     assert Tools::OpenPullRequest.new(@config).requires_approval?
     refute Tools::ALL.reject { |t| t == Tools::OpenPullRequest }.any?(&:requires_approval?)
-    assert_equal 4, Tools.for(@config).size
+    assert_equal 5, Tools.for(@config).size
+  end
+
+  def test_tools_go_by_short_names
+    assert_equal %w[list_files read_file write_file run_tests open_pull_request], Tools.for(@config).map(&:name)
+  end
+
+  def test_lists_files_without_a_git_repo
+    FileUtils.mkdir_p(File.join(@root, "app/models"))
+    File.write(File.join(@root, "app/models/user.rb"), "")
+    assert_equal "a.rb\napp/models/user.rb", Tools::ListFiles.new(@config).execute
+    assert_equal "app/models/user.rb", Tools::ListFiles.new(@config).execute(path: "app")
+    assert_match(/outside the checkout/, Tools::ListFiles.new(@config).execute(path: "..")["error"])
+  end
+
+  def test_lists_tracked_and_new_files_but_not_ignored_ones
+    git_checkout
+    File.write(File.join(@root, ".gitignore"), "log/\n")
+    FileUtils.mkdir_p(File.join(@root, "log"))
+    File.write(File.join(@root, "log/development.log"), "noise")
+    assert_equal ".gitignore\na.rb\nnew.rb", Tools::ListFiles.new(@config).execute
+  end
+
+  def test_writes_into_new_directories
+    Tools::WriteFile.new(@config).execute(path: "app/views/home/index.html.erb", content: "hi")
+    assert_equal "hi", File.read(File.join(@root, "app/views/home/index.html.erb"))
   end
 
   class StubJudge
@@ -58,8 +83,9 @@ class FeatureMachine::Agent::ToolsTest < Minitest::Test
     def call(**args) = (@seen = args) && FeatureMachine::Agent::Judge::Verdict.new(pass: @pass, reasons: [ "because" ])
   end
 
-  def git_checkout
-    system("git", "init", "-q", "-b", "feature", @root, exception: true)
+  def git_checkout(branch: "feature")
+    FileUtils.rm_rf(File.join(@root, ".git"))
+    system("git", "init", "-q", "-b", branch, @root, exception: true)
     # CI runners have no global git identity; the tool's own commit needs one.
     system("git", "-C", @root, "config", "user.name", "t", exception: true)
     system("git", "-C", @root, "config", "user.email", "t@t", exception: true)
@@ -88,6 +114,33 @@ class FeatureMachine::Agent::ToolsTest < Minitest::Test
 
     refute_equal 0, result["exit_status"], "no origin, so the push fails and gh never runs"
     assert_equal 2, commits
+    assert_equal "Add new.rb", `git -C #{@root} log -1 --format=%s`.strip
+  end
+
+  def test_work_on_the_default_branch_moves_to_its_own
+    git_checkout(branch: "main")
+    Tools::OpenPullRequest.new(@config, judge: StubJudge.new(true), criteria: ->(_) { [ "adds new.rb" ] }).execute(title: "Add new.rb", body: "b", work_item_id: 7)
+
+    assert_equal "feature-machine/work-item-7", `git -C #{@root} branch --show-current`.strip
+    assert_equal 1, `git -C #{@root} rev-list --count main`.to_i, "main is untouched"
+  end
+
+  def test_origins_default_branch_is_protected_too
+    git_checkout(branch: "develop")
+    system("git", "-C", @root, "update-ref", "refs/remotes/origin/develop", "HEAD", exception: true)
+    system("git", "-C", @root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/develop", exception: true)
+    Tools::OpenPullRequest.new(@config, judge: StubJudge.new(true), criteria: ->(_) { [ "adds new.rb" ] }).execute(title: "Add new.rb", body: "b", work_item_id: 7)
+
+    assert_equal "feature-machine/work-item-7", `git -C #{@root} branch --show-current`.strip
+    assert_equal 1, `git -C #{@root} rev-list --count develop`.to_i, "develop is untouched"
+  end
+
+  def test_a_rerun_reuses_the_work_items_branch
+    git_checkout(branch: "main")
+    system("git", "-C", @root, "branch", "feature-machine/work-item-7", exception: true)
+    Tools::OpenPullRequest.new(@config, judge: StubJudge.new(true), criteria: ->(_) { [ "adds new.rb" ] }).execute(title: "Add new.rb", body: "b", work_item_id: 7)
+
+    assert_equal "feature-machine/work-item-7", `git -C #{@root} branch --show-current`.strip
     assert_equal "Add new.rb", `git -C #{@root} log -1 --format=%s`.strip
   end
 

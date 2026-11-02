@@ -5,3 +5,8 @@ one:
 two:
   email_address: two@example.com
   handle: two
+
+maintainer:
+  admin: true
+  email_address: maintainer@example.com
+  handle: maintainer

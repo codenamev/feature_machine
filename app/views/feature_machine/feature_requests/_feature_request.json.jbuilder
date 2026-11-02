@@ -6,7 +6,7 @@ json.title         feature_request.title
 json.description   feature_request.description
 json.status        feature_request.status
 json.progress_note feature_request.progress_note
-json.requested_by  feature_request.user.handle
+json.requested_by  FeatureMachine.config.label_for(feature_request.user)
 json.requested_at  feature_request.created_at.iso8601
 json.updated_at    feature_request.updated_at.iso8601
 json.shipped_at    feature_request.shipped_at&.iso8601

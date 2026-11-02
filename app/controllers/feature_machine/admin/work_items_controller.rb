@@ -1,6 +1,4 @@
-class FeatureMachine::Admin::WorkItemsController < ::Admin::BaseController
-  include FeatureMachine::EngineLayout
-
+class FeatureMachine::Admin::WorkItemsController < FeatureMachine::Admin::BaseController
   before_action :set_work_item, only: %i[show edit update destroy draft]
 
   def index

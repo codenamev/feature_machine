@@ -12,6 +12,8 @@
 # host that only adds feature_machine doesn't, and fails to boot without these.
 require "ruby_llm"
 require "neighbor"
+require "jbuilder"
+require "mcp"
 require_relative "feature_machine/version"
 require_relative "feature_machine/configuration"
 require_relative "feature_machine/auth"

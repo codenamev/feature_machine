@@ -45,6 +45,10 @@ module FeatureMachine
       "in_review" => %w[in_progress shipped]
     }.freeze
 
+    # What the maintainer API and MCP tools show: approved work, never a
+    # draft or a declined item.
+    MAINTAINER_STATUSES = %w[planned in_progress in_review shipped].freeze
+
     InvalidTransition = Class.new(StandardError)
 
     validates :title, presence: true, length: { minimum: 8, maximum: 120 }

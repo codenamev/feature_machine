@@ -18,7 +18,7 @@ module FeatureMachine
         "test_command" => "bin/rails test",
         "plan_model" => nil,
         "implement_model" => nil,
-        "max_steps" => 40
+        "max_steps" => 120
       }.freeze
 
       ENV_KEYS = {

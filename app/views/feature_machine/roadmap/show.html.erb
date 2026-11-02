@@ -1,0 +1,70 @@
+<% product = FeatureMachine.config.product_name %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-default" %>
+<% new_bug_report = FeatureMachine.config.host_path(:new_bug_report_path, self) %>
+<% bug_reports = FeatureMachine.config.host_path(:bug_reports_path, self) %>
+<% content_for :title, "Roadmap — #{product}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <%= render "feature_machine/flash" %>
+  <header class="page-header">
+    <p class="page-header__eyebrow">Roadmap</p>
+    <h1 class="page-header__title">What's being built, and what shipped</h1>
+    <p class="page-header__lede">
+      Each entry is a piece of work shaped from what people asked for. Planned
+      work first, then the changelog.
+    </p>
+    <div class="mt-5 flex flex-wrap items-center gap-3">
+      <a href="<%= new_feature_request_path %>" data-slot="button" data-variant="default" data-size="default"
+         class="<%= button %> cn-button-variant-default"><span data-slot="label" class="contents">Request a feature</span></a>
+      <% if new_bug_report %>
+        <a href="<%= new_bug_report %>" data-slot="button" data-variant="outline" data-size="default"
+           class="<%= button %> cn-button-variant-outline"><span data-slot="label" class="contents">Report a bug</span></a>
+      <% end %>
+      <a href="<%= feature_requests_path %>" data-slot="button" data-variant="ghost" data-size="default"
+         class="<%= button %> cn-button-variant-ghost"><span data-slot="label" class="contents">Your requests</span></a>
+      <% if bug_reports %>
+        <a href="<%= bug_reports %>" data-slot="button" data-variant="ghost" data-size="default"
+           class="<%= button %> cn-button-variant-ghost"><span data-slot="label" class="contents">Your bug reports</span></a>
+      <% end %>
+    </div>
+  </header>
+
+  <% if @roadmap.empty? %>
+    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance empty-state">
+      <div data-slot="empty-header" class="cn-empty-header flex max-w-sm flex-col items-center">
+        <h2 data-slot="empty-title" class="cn-empty-title cn-font-heading">Nothing on the roadmap yet</h2>
+        <p data-slot="empty-description" class="cn-empty-description text-muted-foreground">Requests are still being triaged. Planned work will appear here.</p>
+      </div>
+    </div>
+  <% end %>
+
+  <% @roadmap.upcoming.each do |status, work_items| %>
+    <% next if work_items.empty? %>
+    <section class="mt-12" aria-labelledby="roadmap-<%= status %>">
+      <h2 id="roadmap-<%= status %>" class="flex items-baseline gap-3">
+        <%= work_item_status(work_items.first, public: true) %>
+        <span class="text-sm text-muted-foreground"><%= pluralize(work_items.size, "item") %></span>
+      </h2>
+      <p class="page-header__lede mt-2"><%= work_item_status_blurb(status) %></p>
+      <div class="entry-list">
+        <%= render partial: "feature_machine/roadmap/work_item", collection: work_items %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @roadmap.changelog.any? %>
+    <section class="mt-12" aria-labelledby="changelog">
+      <h2 id="changelog" class="page-header__title">Changelog</h2>
+      <p class="page-header__lede mt-2">Features shipped and bugs fixed, newest first.</p>
+      <% @roadmap.changelog.each do |month, work_items| %>
+        <h3 class="changelog-month" id="changelog-<%= month.strftime("%Y-%m") %>"><%= month.strftime("%B %Y") %></h3>
+        <div class="entry-list">
+          <%= render partial: "feature_machine/roadmap/work_item", collection: work_items %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

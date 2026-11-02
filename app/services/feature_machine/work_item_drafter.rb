@@ -73,7 +73,7 @@ module FeatureMachine
       attributes = {
         "title" => lead&.title || "Untitled work item",
         "problem" => @requests.map { |request|
-          [ "- @#{request.user.handle}: #{request.title}", request.description.presence ].compact.join(" - ")
+          [ "- #{FeatureMachine.config.label_for(request.user)}: #{request.title}", request.description.presence ].compact.join(" - ")
         }.join("\n")
       }
       Draft.new(attributes: clamp(attributes), source: :fallback)

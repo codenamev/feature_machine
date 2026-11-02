@@ -1,6 +1,4 @@
-class FeatureMachine::Admin::WorkItemRelationsController < ::Admin::BaseController
-  include FeatureMachine::EngineLayout
-
+class FeatureMachine::Admin::WorkItemRelationsController < FeatureMachine::Admin::BaseController
   before_action :set_work_item
 
   def create

@@ -41,6 +41,7 @@ class FeatureMachine::InstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/^  feature_machine_routes :web$/, content)
       assert_match(/namespace :admin do\n\s+feature_machine_routes :admin\n/, content)
       assert_match(/namespace :api, defaults: \{ format: :json \} do\n\s+feature_machine_routes :api\n/, content)
+      assert_match(/^  feature_machine_routes :mcp$/, content)
     end
   end
 

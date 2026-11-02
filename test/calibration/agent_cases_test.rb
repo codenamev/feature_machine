@@ -4,7 +4,7 @@ require "yaml"
 # Shape check for agent_cases.yml. No database and no model: this only keeps
 # the dataset loadable by RubyLLM::Evaluation between live runs.
 class AgentCasesTest < Minitest::Test
-  CASES_PATH = File.expand_path("agent_cases.yml", __dir__)
+  CASES_PATH = File.expand_path("../../lib/feature_machine/calibration/agent_cases.yml", __dir__)
   STATUSES   = %w[done awaiting_approval step_limit].freeze
 
   def setup

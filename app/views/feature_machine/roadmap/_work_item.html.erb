@@ -1,0 +1,34 @@
+<%# One roadmap entry: the public face of a work item. No spec; that is the
+    maintainer's working document. %>
+<article id="<%= dom_id(work_item) %>" data-slot="nr-entry" data-state="ready"
+         class="cn-nr-entry flex gap-4 py-5 border-b border-border group/entry cn-nr-entry-state-ready">
+  <div data-slot="nr-entry-body" class="cn-nr-entry-body order-1 min-w-0 flex-1">
+    <div class="cn-nr-entry-title-row flex flex-wrap items-baseline gap-3">
+      <h3 data-slot="nr-entry-title" class="cn-nr-entry-title"><%= work_item.title %></h3>
+      <span class="cn-nr-entry-status"><%= work_item_status(work_item, public: true) %></span>
+    </div>
+
+    <div data-slot="nr-entry-meta" class="cn-nr-entry-meta mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+      <span class="cn-nr-entry-meta-item"><%= work_kind_label(work_item) %></span>
+      <% if work_item.shipped_at.present? %>
+        <span class="cn-nr-entry-meta-sep" aria-hidden="true">&middot;</span>
+        <span class="cn-nr-entry-meta-item">shipped <%= work_item.shipped_at.strftime("%b %-d, %Y") %></span>
+      <% end %>
+      <% if (demand = work_item_demand(work_item)) %>
+        <span class="cn-nr-entry-meta-sep" aria-hidden="true">&middot;</span>
+        <span class="cn-nr-entry-meta-item"><%= demand %></span>
+      <% end %>
+    </div>
+
+    <p data-slot="nr-entry-summary" class="cn-nr-entry-summary mt-2"><%= work_item.summary %></p>
+
+    <% if work_item.progress_note.present? %>
+      <div data-slot="nr-entry-details" class="cn-nr-entry-details mt-4 pt-4">
+        <div class="entry-section">
+          <h4 class="entry-section__title">Progress</h4>
+          <p class="entry-section__content"><%= simple_format(work_item.progress_note, {}, wrapper_tag: "span") %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</article>

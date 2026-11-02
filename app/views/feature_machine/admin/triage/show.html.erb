@@ -1,0 +1,120 @@
+<% config = FeatureMachine.config %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none cn-button-size-sm" %>
+<% content_for :title, "Triage — #{config.product_name}" %>
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+<% end %>
+
+<div class="container">
+  <%= render "feature_machine/flash" %>
+  <header class="page-header">
+    <p class="page-header__eyebrow">Admin</p>
+    <h1 class="page-header__title">Triage</h1>
+    <p class="page-header__lede">
+      Requests nobody has decided on yet, grouped where they ask for the same
+      thing and ranked by how many different people asked. Form a work item
+      from a group and its spec is drafted for you to review, add the group to
+      a work item that already exists, or decline it.
+    </p>
+    <%= render config.admin_nav_partial if config.admin_nav_partial? %>
+    <div class="mt-5 flex flex-wrap items-center gap-3">
+      <%= link_to "Work items", admin_work_items_path %>
+    </div>
+  </header>
+
+  <% if @buckets.empty? %>
+    <%# Plain markup on the host's cn-empty hooks; the engine ships no components of its own. %>
+    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance empty-state">
+      <div data-slot="empty-header" class="cn-empty-header flex max-w-sm flex-col items-center">
+        <h2 data-slot="empty-title" class="cn-empty-title cn-font-heading">Inbox zero</h2>
+        <p data-slot="empty-description" class="cn-empty-description text-muted-foreground">Every request has been bucketed into a work item or declined.</p>
+      </div>
+    </div>
+  <% else %>
+    <p class="triage-summary" id="triage-summary">
+      <%= pluralize(@request_count, "request") %> waiting, in <%= pluralize(@buckets.size, "group") %>.
+    </p>
+
+    <% @buckets.each_with_index do |bucket, index| %>
+      <% n = index + 1 %>
+      <section class="triage-bucket" id="bucket-<%= n %>" aria-labelledby="bucket-<%= n %>-title" data-kind="<%= bucket.kind %>">
+        <header class="triage-bucket__header">
+          <h2 class="triage-bucket__title" id="bucket-<%= n %>-title"><%= bucket.lead.title %></h2>
+          <p class="triage-bucket__demand">
+            <%= work_kind_label(bucket.lead) %> ·
+            <%= pluralize(bucket.requesters_count, "person") %> ·
+            <%= pluralize(bucket.requests.size, "request") %>
+          </p>
+          <% if bucket.judged? %>
+            <p class="triage-bucket__judgment">
+              <span class="triage-bucket__flag" title="How likely the judge thinks this is a bug report">bug <%= number_to_percentage(bucket.bug_probability * 100, precision: 0) %></span>
+              <% if bucket.duplicate_probability %>
+                · <span class="triage-bucket__flag" title="How likely an open work item already covers this">duplicate <%= number_to_percentage(bucket.duplicate_probability * 100, precision: 0) %></span>
+              <% end %>
+              <% if bucket.clarity %>
+                · <span class="triage-bucket__flag" title="How clearly the request says what and why">clarity <%= %w[low mid high][bucket.clarity.round] || bucket.clarity.round %></span>
+              <% end %>
+              <% if bucket.mis_kinded? %>
+                <% reads_as = bucket.kind == "bug" ? "feature" : "bug" %>
+                · <span class="triage-bucket__flag triage-bucket__flag--warn" title="Filed as a <%= bucket.kind %> but the judge reads it as a <%= reads_as %>">filed as <%= bucket.kind %>, reads as <%= reads_as %></span>
+              <% end %>
+            </p>
+          <% end %>
+        </header>
+
+        <div class="entry-list">
+          <% bucket.requests.each do |feature_request| %>
+            <article id="<%= dom_id(feature_request, :triage) %>" class="cn-nr-entry flex gap-4 py-4 border-b border-border">
+              <div class="min-w-0 flex-1">
+                <h3 class="cn-nr-entry-title"><%= feature_request.title %></h3>
+                <p class="cn-nr-entry-meta mt-1 text-sm">
+                  <%= config.label_for(feature_request.user) %> ·
+                  filed <%= feature_request.created_at.strftime("%b %-d, %Y") %>
+                  <% if config.embeddings? && feature_request.embedding.nil? %> · not yet embedded<% end %>
+                </p>
+                <% if feature_request.description.present? %>
+                  <p class="cn-nr-entry-summary mt-2"><%= feature_request.description %></p>
+                <% end %>
+              </div>
+              <%= button_to "Decline", admin_feature_request_path(feature_request), method: :patch,
+                    params: { feature_request: { status: "declined" } },
+                    class: "#{button} cn-button-variant-ghost",
+                    form: { data: { turbo_confirm: "Decline this request? The requester will see it as declined." } } %>
+            </article>
+          <% end %>
+        </div>
+
+        <div class="triage-bucket__actions mt-4 flex flex-wrap items-center gap-3">
+          <% if bucket.suggested_work_item %>
+            <div class="triage-bucket__suggestion">
+              <p>
+                Looks like <%= link_to bucket.suggested_work_item.title, admin_work_item_path(bucket.suggested_work_item) %>
+                <span class="triage-bucket__score">(<%= number_to_percentage(bucket.suggestion_similarity * 100, precision: 0) %> similar)</span>
+              </p>
+              <%= button_to "Attach to it", admin_attachments_path,
+                    params: { work_item_id: bucket.suggested_work_item.id, request_ids: bucket.requests.map(&:id) },
+                    class: "#{button} cn-button-variant-default" %>
+            </div>
+          <% end %>
+
+          <%= button_to "Form a work item", admin_work_items_path,
+                params: { request_ids: bucket.requests.map(&:id) },
+                class: "#{button} #{bucket.suggested_work_item ? 'cn-button-variant-outline' : 'cn-button-variant-default'}" %>
+
+          <% existing = @work_items.select { |item| item.kind == bucket.kind } %>
+          <% if existing.any? %>
+            <%= form_with url: admin_attachments_path, class: "triage-bucket__attach flex items-center gap-2" do %>
+              <% bucket.requests.each do |feature_request| %>
+                <%= hidden_field_tag "request_ids[]", feature_request.id, id: nil %>
+              <% end %>
+              <label class="triage-bucket__attach-label" for="bucket-<%= n %>-work-item">or add to an existing work item</label>
+              <%= select_tag "work_item_id", options_for_select([ [ "Choose a work item…", "" ] ] + existing.map { |item| [ item.title, item.id ] }),
+                    id: "bucket-#{n}-work-item", class: "cn-native-select" %>
+              <button type="submit" class="<%= button %> cn-button-variant-outline">Add</button>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+</div>

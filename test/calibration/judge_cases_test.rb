@@ -4,7 +4,7 @@ require "yaml"
 # Shape check for judge_cases.yml. No database and no model: the live run is
 # `rake feature_machine:calibrate_judge`, and this only keeps the file honest.
 class JudgeCasesTest < Minitest::Test
-  CASES_PATH = File.expand_path("judge_cases.yml", __dir__)
+  CASES_PATH = File.expand_path("../../lib/feature_machine/calibration/judge_cases.yml", __dir__)
   QUESTIONS  = {
     "bug"                    => %w[high low],
     "duplicate_of_open_item" => %w[high low],

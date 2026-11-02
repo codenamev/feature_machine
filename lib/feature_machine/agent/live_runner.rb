@@ -9,15 +9,23 @@ module FeatureMachine
     # Fulfiller on a throwaway clone of the checkout, and report which tool
     # calls actually went through.
     #
+    # It approves what a person at the prompt routinely would (the agent's
+    # progress notes through update_work_item) and stops at open_pull_request,
+    # the gate the cases are about.
+    #
     # The maintainer API can read and update items but not create them, so
     # seeding is the caller's: inside the dummy app it is a WorkItem.create!.
     #
     #   Evaluation.runner = LiveRunner.new(config: Config.load, seed: ->(input) { ... })
     class LiveRunner
-      def initialize(config:, seed:, fulfil: Fulfiller.method(:run), chat: ->(c) { Fulfiller.chat(config: c) })
+      HELD = "open_pull_request".freeze
+
+      def initialize(config:, seed:, fulfil: Fulfiller.method(:run), resume: Fulfiller.method(:resume),
+                     chat: ->(c) { Fulfiller.chat(config: c) })
         @config = config
         @seed = seed
         @fulfil = fulfil
+        @resume = resume
         @chat = chat
       end
 
@@ -29,11 +37,25 @@ module FeatureMachine
           chat = @chat.call(config)
           completed = track_completed(chat)
           result = @fulfil.call(chat, item_id: item_id, max_steps: config.max_steps, implement_model: config.implement_model)
-          { result: result, completed: completed }
+          { result: approve_routine(chat, result, config.max_steps), completed: completed }
         end
       end
 
       private
+
+      def approve_routine(chat, result, max_steps)
+        steps = result.steps
+        while result.status == :awaiting_approval
+          routine = result.pending.reject { |call| call.name == HELD }
+          routine.each { |call| chat.approve(call) }
+          return result.class.new(**result.to_h, steps: steps, pending: result.pending - routine) if routine.size < result.pending.size
+
+          result = @resume.call(chat, max_steps: max_steps - steps)
+          steps += result.steps
+        end
+        result.steps = steps
+        result
+      end
 
       def clone_into(dir)
         _out, err, status = Open3.capture3("git", "clone", "--quiet", "--local", @config.checkout, dir)

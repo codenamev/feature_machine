@@ -39,23 +39,46 @@ FeatureMachine.configure do |config|
   # config.drafter_provider  = :openai
   # config.drafter_fallbacks = []
 
-  # Any RubyLLM chat model ranks untriaged requests (bug? duplicate? clear?);
-  # nil keeps triage unranked.
-  # config.judgment_model = nil
+  # A RubyLLM chat model ranks untriaged requests (bug? duplicate? clear?);
+  # nil keeps triage unranked. It needs a provider with structured judgments:
+  # OpenAI, Ollama, or TypeSafe ("jev-latest"). With only an OpenRouter key,
+  # use "jev-latest" and set RubyLLM's typesafe_api_base to
+  # "https://openrouter.ai/api" and typesafe_api_key to that key. For a local
+  # Jev-compatible server, point typesafe_api_base at it and name the provider
+  # so the server's own model id resolves.
+  # config.judgment_model    = nil
+  # config.judgment_provider = nil   # e.g. :typesafe
 
   # The layout engine pages render through. nil uses this app's own; set
   # "feature_machine" for the engine's minimal standalone shell.
   # config.layout = nil
 
-  # Links into this app the engine's views offer. Each lambda gets the view
-  # context; leave one nil and the link is omitted.
+  # Engine pages show their own notices ("Thanks. Its status will update
+  # here."), since a new app's layout doesn't render flash. Turn this off if
+  # yours does, or they'll show twice.
+  # config.flash_in_pages = true
+
+  # What engine controllers inherit from, as class names. Pages and admin
+  # pages get this app's ApplicationController (its layout and auth filters);
+  # the API gets ActionController::API unless you have a base of your own.
+  # config.parent_controller       = "ApplicationController"
+  # config.admin_parent_controller = "ApplicationController"
+  # config.api_parent_controller   = "ActionController::API"
+
+  # Where a signed-out visitor to an engine page goes, given the controller.
+  # The default finds new_session_path (Rails' authentication generator);
+  # nil answers 401.
+  # config.sign_in_path = ->(controller) { controller.new_session_path }
+
+  # The engine links its own roadmap, bug reports and triage pages. Point a
+  # lambda at your own page instead, or set nil to drop the link.
   # config.roadmap_path        = ->(view, work_item = nil) { view.roadmap_path }
   # config.bug_reports_path    = ->(view) { view.bug_reports_path }
   # config.new_bug_report_path = ->(view) { view.new_bug_report_path }
   # config.admin_triage_path   = ->(view) { view.admin_triage_path }
 
   # This app's admin nav partial, rendered atop engine admin pages, and how a
-  # requester is named in them.
+  # requester is named in them and in what agents read.
   # config.admin_nav_partial = "admin/nav"
   # config.user_label        = ->(user) { "user ##{user.id}" }
 

@@ -19,7 +19,7 @@ module FeatureMachine
       end
 
       # The engine's routes are drawn into the host's route set (see
-      # FeatureMachine::Routes), so the generator adds the three macro calls
+      # FeatureMachine::Routes), so the generator adds the four macro calls
       # rather than a mount line. Skipped if the host already calls the macro.
       def add_routes
         routes = File.join(destination_root, "config/routes.rb")
@@ -37,6 +37,7 @@ module FeatureMachine
           namespace :api, defaults: { format: :json } do
             feature_machine_routes :api
           end
+          feature_machine_routes :mcp
         RUBY
       end
 
@@ -48,6 +49,8 @@ module FeatureMachine
             bin/rails feature_machine:install:migrations
             bin/rails db:migrate
           Then set current_user, admin and authenticate_api for your app.
+          Signed-in users get /feature-requests, /bug-reports and /roadmap;
+          admins get /admin/triage and /admin/work_items; agents get /api and /mcp.
         MSG
       end
     end
