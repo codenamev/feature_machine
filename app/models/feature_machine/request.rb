@@ -1,4 +1,4 @@
-# Something a user asked nowreading.dev for: a feature, or a bug report. This
+# Something a user asked the host app for: a feature, or a bug report. This
 # is the raw intake record, in the requester's own words. What actually gets
 # built is a WorkItem; triage is the act of bucketing requests into one.
 #

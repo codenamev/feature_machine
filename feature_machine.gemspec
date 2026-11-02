@@ -6,12 +6,13 @@ Gem::Specification.new do |spec|
   spec.authors     = [ "codenamev" ]
   spec.summary     = "Feature requests in, triaged work items out, built by your agents."
   spec.description = "A mountable Rails engine for the feature-request -> triage -> " \
-                     "work-item -> agent hand-off loop, extracted from nowreading.dev."
-  spec.homepage    = "https://github.com/codenamev/nowreading.dev/issues/102"
+                     "work-item -> agent hand-off loop."
+  spec.homepage    = "https://github.com/codenamev/feature_machine"
+  spec.metadata["source_code_uri"] = spec.homepage
   spec.required_ruby_version = ">= 3.3"
 
-  # Licence, repository and release are phase 6 (nowreading#102). Until then
-  # this gem is only ever loaded by path from nowreading.dev.
+  # No licence or release yet. Until the first release the gem is only
+  # loaded by path or git source, so pushes are blocked.
   spec.metadata["allowed_push_host"] = "https://example.invalid"
 
   spec.files = Dir["lib/**/*", "app/**/*", "config/**/*", "db/**/*", "exe/*"]

@@ -16,9 +16,9 @@ module FeatureMachine
     engine_name "feature_machine"
 
     # The engine ships its three migrations in db/migrate. A new host copies
-    # them with `bin/rails feature_machine:install:migrations`. nowreading
-    # already ran its own copies (same class names), so the task skips all
-    # three here and schema.rb doesn't change. Nothing adds the engine's path
+    # them with `bin/rails feature_machine:install:migrations`. A host that already
+    # has copies with the same class names gets all three skipped, and its
+    # schema.rb doesn't change. Nothing adds the engine's path
     # to the host's migrations_paths, so they never run twice.
     initializer "feature_machine.auth_middleware", after: :load_config_initializers do |app|
       app.middleware.use FeatureMachine::Auth::Bearer

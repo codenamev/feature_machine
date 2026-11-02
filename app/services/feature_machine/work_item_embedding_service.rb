@@ -2,7 +2,7 @@ module FeatureMachine
   class WorkItemEmbeddingService < BaseEmbeddingService
     private
 
-    # The host picks the model (nowreading#102, phase 3c-i); nil = embeddings off.
+    # The host picks the model; nil = embeddings off.
     def embedding_model
       ::FeatureMachine.config.embedding_model
     end
