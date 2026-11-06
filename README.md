@@ -76,8 +76,9 @@ model.
   set `config.parent_controller`, `config.admin_parent_controller` or
   `config.api_parent_controller`. An API base of your own keeps its own
   `render_error` and error handling.
-- **The engine ships markup, not CSS.** Its pages use plain HTML with
-  `cn-*` class hooks for your stylesheet. They show their own flash notices,
+- **The engine ships markup, not CSS.** Its pages carry `cn-*` class hooks
+  for your stylesheet, alongside Tailwind-style utility classes that only take
+  effect if your app already builds Tailwind. They show their own flash notices,
   because a new app's layout doesn't; set `config.flash_in_pages = false` if
   yours does.
 - **Your own roadmap or bug board** replaces the engine's by pointing
