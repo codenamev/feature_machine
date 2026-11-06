@@ -60,7 +60,50 @@ class FeatureMachine::InstallGeneratorTest < Rails::Generators::TestCase
     assert_no_file "config/routes.rb"
   end
 
+  test "reads the session cookie when the app has Rails' authentication generator" do
+    write_session_model
+    run_generator
+    FeatureMachine.reset_config!
+    load File.join(destination_root, "config/initializers/feature_machine.rb")
+
+    session = Struct.new(:user).new(:alice)
+    jar = Struct.new(:signed).new({ session_id: 7 })
+    request = Struct.new(:cookie_jar).new(jar)
+    finder = Module.new { define_singleton_method(:find_by) { |id:| id == 7 ? session : nil } }
+    Object.const_set(:Session, finder)
+
+    assert_equal :alice, FeatureMachine.config.current_user.call(request)
+  ensure
+    Object.send(:remove_const, :Session) if Object.const_defined?(:Session, false) && Session == finder
+    FeatureMachine.reset_config!
+  end
+
+  test "warns when Rails' authentication has no root route to land on" do
+    write_session_model
+    write_routes
+    output = run_generator
+    assert_match "has no root route", output
+  end
+
+  test "stays quiet about the root route when one exists" do
+    write_session_model
+    write_routes("  root \"home#index\"\n")
+    output = run_generator
+    assert_no_match "has no root route", output
+  end
+
+  test "stays quiet about the root route without Rails' authentication" do
+    write_routes
+    output = run_generator
+    assert_no_match "has no root route", output
+  end
+
   private
+    def write_session_model
+      FileUtils.mkdir_p File.join(destination_root, "app/models")
+      File.write File.join(destination_root, "app/models/session.rb"), "class Session < ApplicationRecord\nend\n"
+    end
+
     def write_routes(body = "")
       FileUtils.mkdir_p File.join(destination_root, "config")
       File.write File.join(destination_root, "config/routes.rb"), "Rails.application.routes.draw do\n#{body}end\n"

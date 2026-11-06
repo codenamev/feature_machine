@@ -18,6 +18,17 @@ module FeatureMachine
         template "initializer.rb", "config/initializers/feature_machine.rb"
       end
 
+      # Rails' authentication generator redirects to root_url after sign-in,
+      # and a fresh `rails new` has no root route, so the first login 500s.
+      # Not the engine's bug, but every first-time installer hits it.
+      def check_root_route
+        routes = File.join(destination_root, "config/routes.rb")
+        return unless rails_authentication? && File.exist?(routes)
+        return if File.read(routes).match?(/^\s*root\b/)
+
+        say_status :warn, "config/routes.rb has no root route; Rails' sign-in redirects to root_url and will 500 until you add one", :yellow
+      end
+
       # The engine's routes are drawn into the host's route set (see
       # FeatureMachine::Routes), so the generator adds the four macro calls
       # rather than a mount line. Skipped if the host already calls the macro.
@@ -48,11 +59,18 @@ module FeatureMachine
           Next:
             bin/rails feature_machine:install:migrations
             bin/rails db:migrate
-          Then set current_user, admin and authenticate_api for your app.
+          Then check current_user and admin, and set authenticate_api for your app.
           Signed-in users get /feature-requests, /bug-reports and /roadmap;
           admins get /admin/triage and /admin/work_items; agents get /api and /mcp.
         MSG
       end
+
+      private
+        # `bin/rails generate authentication` writes app/models/session.rb and
+        # a signed session_id cookie; that's the convention we key off.
+        def rails_authentication?
+          File.exist?(File.join(destination_root, "app/models/session.rb"))
+        end
     end
   end
 end

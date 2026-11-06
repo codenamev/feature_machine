@@ -5,9 +5,16 @@ FeatureMachine.configure do |config|
   # The user model the engine's requests and work items belong to.
   config.user_class   = "User"
 
+<% if rails_authentication? -%>
+  # The signed-in user for a request, or nil. This app has Rails'
+  # authentication generator (app/models/session.rb), so the session cookie
+  # it sets answers the question.
+  config.current_user = ->(request) { Session.find_by(id: request.cookie_jar.signed[:session_id])&.user }
+<% else -%>
   # The signed-in user for a request, or nil. The default treats everyone as
   # signed out, so nothing is readable until this is set.
   config.current_user = ->(_request) { nil }
+<% end -%>
 
   # May this user triage requests and manage work items?
   config.admin        = ->(user) { user.respond_to?(:admin?) && user.admin? }
