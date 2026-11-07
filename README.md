@@ -2,11 +2,26 @@
 
 Feature requests, work items, and the judge pipeline, packaged as a Rails engine.
 
+Your users file feature requests and bug reports, on your site or through
+their own agents over MCP. You triage them into work items, a judge ranks and
+groups them, and an optional local agent turns a planned item into a pull
+request for you to approve.
+
+## Requirements
+
+- Ruby 3.3+, Rails 8.1+
+- Postgres with the pgvector extension
+- `ruby_llm` 2.1+ (only called if you name a model; see [Models](#models))
+
 ## Install
 
-Add the gem, then:
+```ruby
+# Gemfile
+gem "feature_machine"
+```
 
 ```
+bundle install
 bin/rails g feature_machine:install
 bin/rails feature_machine:install:migrations
 bin/rails db:migrate
@@ -130,6 +145,60 @@ against mutated cases: paraphrases mustn't move an answer, and changes that
 alter the meaning must. It spends tokens, so it never runs in CI.
 In November 2026, `jev-latest` held 18 of 18. Rerun it when you change models.
 
+## Agents over MCP
+
+`feature_machine_routes :mcp` serves `POST /mcp`. Agents authenticate with a
+bearer token through `config.authenticate_api`; a browser session cookie is
+never accepted there.
+
+Any token with `read` (and `write` for filing) sees:
+
+| Tool | Does |
+| --- | --- |
+| `list_feature_requests` | The user's own requests, with status and the maintainer's note |
+| `request_feature` | File a request on the user's behalf |
+| `list_bug_reports` | The user's own bug reports, with status and note |
+| `report_bug` | File a bug on the user's behalf |
+| `read_roadmap` | In-progress and planned work, then the changelog |
+
+A `maintainer` token whose user also passes `config.admin` additionally sees
+`list_work_items`, `get_work_item` and `update_work_item`. Those aren't
+advertised to anyone else, and the engine re-checks `config.admin` on every
+maintainer call rather than trusting the token's scope alone. An agent can
+move an item through its statuses and attach a pull request, but it can't
+edit the spec, approve drafts or decline work.
+
+## Configuration reference
+
+All set in `config/initializers/feature_machine.rb`. Lambdas are called per
+request or per record; strings naming classes are constantized lazily, so the
+initializer never autoloads app code.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `current_user` | `->(request) { nil }` | The signed-in user for a request |
+| `admin` | `user.admin?` if defined | May this user triage? |
+| `authenticate_api` | `nil` | Bearer token to credential (`user`, `allows?(scope)`). `nil` = no API or MCP access |
+| `session_auth` | `true` | Let a browser session act as a credential on the JSON API (never MCP) |
+| `user_class` | `"User"` | The model `feature_requests.user_id` points at |
+| `user_label` | `"user #<id>"` | How a requester is named on admin pages and in specs |
+| `product_name` | `"this app"` | Used in copy and error messages |
+| `product_blurb` | `product_name` | One line describing the product to the drafter |
+| `token_help_url` | `nil` | Where scope errors tell users to get a token |
+| `protected_resource_url` | `nil` | OAuth protected-resource metadata URL for 401 `WWW-Authenticate` |
+| `embedding_model` | `nil` | RubyLLM embedding model. `nil` = no similarity grouping |
+| `drafter_model`, `drafter_provider`, `drafter_fallbacks` | `nil`, `nil`, `[]` | Chat model that writes work-item specs. `nil` = plain digest |
+| `judgment_model`, `judgment_provider` | `nil`, `nil` | Structured-judgment model for triage. `nil` = unranked |
+| `on_status_change` | `nil` | `->(request) { ... }` after a request's status changes (mail the requester, etc.) |
+| `parent_controller` | `"ApplicationController"` | Base for engine pages |
+| `admin_parent_controller` | `parent_controller` | Base for engine admin pages |
+| `api_parent_controller` | `"ActionController::API"` | Base for engine API controllers |
+| `layout` | host's own | Layout for engine pages; `"feature_machine"` is a minimal standalone shell |
+| `admin_nav_partial` | `nil` | Host partial rendered atop engine admin pages, e.g. `"admin/nav"` |
+| `sign_in_path` | `new_session_path` if drawn | `->(controller) { ... }` where signed-out visitors go |
+| `flash_in_pages` | `true` | Engine pages render their own flash notices |
+| `roadmap_path`, `bug_reports_path`, `new_bug_report_path`, `admin_triage_path` | engine's pages | `->(view, ...) { ... }` to link your own pages instead; `nil` drops the link |
+
 ## The fulfilment agent
 
 `feature_machine agent` runs on a developer's machine, inside a checkout of the
@@ -199,3 +268,7 @@ command executes code the model wrote. The approval gates and the judge narrow
 what reaches GitHub. They don't sandbox the test run. If that matters for your
 app, run the agent in a disposable checkout or container. A sandboxed test
 runner is the planned upgrade, not part of this version.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
