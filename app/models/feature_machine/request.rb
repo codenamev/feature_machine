@@ -36,11 +36,17 @@ module FeatureMachine
     enum :kind, { feature: 0, bug: 1 }, validate: true
     enum :status, { requested: 0, planned: 1, in_progress: 2, shipped: 3, declined: 4 }, validate: true
 
+    # The only statuses set on a request directly, and only while it has no
+    # work item: decline it, or reopen it. Every other status is copied from
+    # the work item it joins (follow_work_item, or WorkItem#sync_requests).
+    DIRECT_STATUSES = %w[requested declined].freeze
+
     has_neighbors :embedding
 
     validates :title, presence: true, length: { minimum: 8, maximum: 120 }
     validates :description, length: { maximum: 2000 }
     validates :progress_note, length: { maximum: 1000 }
+    validate :status_set_directly_only_while_unattached, on: :update
 
     scope :newest_first, -> { order(created_at: :desc) }
     scope :oldest_first, -> { order(created_at: :asc) }
@@ -60,6 +66,17 @@ module FeatureMachine
     after_update_commit :announce_status_change, if: -> { saved_change_to_status? && ::FeatureMachine.config.on_status_change }
 
     private
+
+    # Joining or leaving a work item rewrites status in before_save, so a
+    # status passed alongside a work_item_id change is moot. Without one, a
+    # direct move is only requested <-> declined, and only when unattached.
+    def status_set_directly_only_while_unattached
+      return unless will_save_change_to_status?
+      return if will_save_change_to_work_item_id?
+      return if work_item.nil? && DIRECT_STATUSES.include?(status)
+
+      errors.add(:status, work_item ? "follows its work item" : "can only be set to requested or declined")
+    end
 
     # Joining a work item means taking on its public state; leaving one puts
     # the request back in the triage inbox.
