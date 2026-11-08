@@ -85,8 +85,12 @@ module FeatureMachine::WorkItemsHelper
     "#{::FeatureMachine::WorkItem::GITHUB}#{path}" if path
   end
 
-  def work_item_status_options
-    ::FeatureMachine::WorkItem.statuses.keys.map { |status| [ work_item_status_label(status), status ] }
+  # A new item may start anywhere; a saved one offers where it stands plus
+  # the moves its transition table allows.
+  def work_item_status_options(work_item = nil)
+    statuses = ::FeatureMachine::WorkItem.statuses.keys
+    statuses &= [ work_item.status_in_database, *work_item.next_statuses ] if work_item&.persisted?
+    statuses.map { |status| [ work_item_status_label(status), status ] }
   end
 
   def work_item_relation_options
