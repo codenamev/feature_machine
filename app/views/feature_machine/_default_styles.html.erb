@@ -1,0 +1,5 @@
+<%# The engine's default cn-* styles, inline so no asset pipeline is assumed.
+    Hosts with their own cn design system set config.default_stylesheet = false. %>
+<% if FeatureMachine.config.default_stylesheet %>
+  <%= tag.style FeatureMachine.default_stylesheet.html_safe, nonce: content_security_policy_nonce %>
+<% end %>

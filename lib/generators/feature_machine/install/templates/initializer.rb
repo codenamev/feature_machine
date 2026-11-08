@@ -65,6 +65,10 @@ FeatureMachine.configure do |config|
   # yours does, or they'll show twice.
   # config.flash_in_pages = true
 
+  # Engine pages inline default styles for their cn-* classes, in a CSS layer
+  # so your own cn-* rules win. Turn off if your design system styles them all.
+  # config.default_stylesheet = true
+
   # What engine controllers inherit from, as class names. Pages and admin
   # pages get this app's ApplicationController (its layout and auth filters);
   # the API gets ActionController::API unless you have a base of your own.

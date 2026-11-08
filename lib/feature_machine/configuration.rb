@@ -20,7 +20,8 @@ module FeatureMachine
                   :judgment_model, :judgment_provider, :roadmap_path, :bug_reports_path, :new_bug_report_path,
                   :admin_nav_partial, :user_label, :admin_triage_path, :layout,
                   :on_status_change, :parent_controller, :admin_parent_controller,
-                  :api_parent_controller, :sign_in_path, :flash_in_pages
+                  :api_parent_controller, :sign_in_path, :flash_in_pages,
+                  :default_stylesheet
 
     # The engine's own pages, linked by default. A host that draws its own
     # roadmap or bug board points these at it instead, or sets nil to drop the
@@ -64,6 +65,10 @@ module FeatureMachine
       @api_parent_controller  = "ActionController::API"
       @sign_in_path           = DEFAULT_SIGN_IN_PATH
       @flash_in_pages         = true
+      # Inline the engine's cn-* styles on every page. They sit in a CSS
+      # layer, so a host's own cn-* rules win; a host with a full cn design
+      # system can still turn them off.
+      @default_stylesheet     = true
     end
 
     # The classes engine controllers inherit from, named as strings so the
