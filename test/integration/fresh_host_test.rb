@@ -77,7 +77,7 @@ class FeatureMachine::FreshHostTest < ActionDispatch::IntegrationTest
 
     get "/admin/triage", headers: as(:maintainer)
     assert_response :success
-    assert_select ".triage-bucket", 2
+    assert_select ".cn-triage-bucket", 2
 
     post "/admin/work_items", params: { request_ids: [ first.id ] }, headers: as(:maintainer)
     work_item = FeatureMachine::WorkItem.last
@@ -121,7 +121,7 @@ class FeatureMachine::FreshHostTest < ActionDispatch::IntegrationTest
 
     get "/admin/triage", headers: as(:maintainer)
     assert_response :success
-    assert_select ".triage-bucket__judgment", 0
+    assert_select ".cn-triage-bucket-judgment", 0
 
     post "/admin/work_items", params: { request_ids: FeatureMachine::Request.pluck(:id) }, headers: as(:maintainer)
     assert_match "model was unavailable", flash[:notice]
