@@ -6,12 +6,12 @@
   <meta name="robots" content="noindex">
 <% end %>
 
-<div class="container">
+<div class="cn-container">
   <%= render "feature_machine/flash" %>
-  <header class="page-header">
-    <p class="page-header__eyebrow">Roadmap</p>
-    <h1 class="page-header__title">Your bug reports</h1>
-    <p class="page-header__lede">
+  <header class="cn-page-header">
+    <p class="cn-page-header-eyebrow">Roadmap</p>
+    <h1 class="cn-page-header-title">Your bug reports</h1>
+    <p class="cn-page-header-lede">
       What you've reported and where each one stands. Only you can see this
       page.<% if roadmap %> Fixes also show up on the <%= link_to "roadmap", roadmap %>.<% end %>
     </p>
@@ -24,14 +24,14 @@
   </header>
 
   <% if @bug_reports.empty? %>
-    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance empty-state">
+    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance">
       <div data-slot="empty-header" class="cn-empty-header flex max-w-sm flex-col items-center">
         <h2 data-slot="empty-title" class="cn-empty-title cn-font-heading">No bug reports yet</h2>
         <p data-slot="empty-description" class="cn-empty-description text-muted-foreground">If something isn't working the way it should, tell us and follow the fix here.</p>
       </div>
     </div>
   <% else %>
-    <div class="entry-list" id="bug-reports">
+    <div class="cn-entry-list" id="bug-reports">
       <%= render partial: "feature_machine/feature_requests/feature_request", collection: @bug_reports %>
     </div>
   <% end %>

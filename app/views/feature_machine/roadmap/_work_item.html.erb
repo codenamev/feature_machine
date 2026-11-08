@@ -24,9 +24,9 @@
 
     <% if work_item.progress_note.present? %>
       <div data-slot="nr-entry-details" class="cn-nr-entry-details mt-4 pt-4">
-        <div class="entry-section">
-          <h4 class="entry-section__title">Progress</h4>
-          <p class="entry-section__content"><%= simple_format(work_item.progress_note, {}, wrapper_tag: "span") %></p>
+        <div class="cn-entry-section">
+          <h4 class="cn-entry-section-title">Progress</h4>
+          <p class="cn-entry-section-content"><%= simple_format(work_item.progress_note, {}, wrapper_tag: "span") %></p>
         </div>
       </div>
     <% end %>
