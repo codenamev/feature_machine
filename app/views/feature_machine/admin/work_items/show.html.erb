@@ -11,11 +11,11 @@
 <% relations = @work_item.relations.to_a %>
 <% similar = @work_item.similar %>
 
-<div class="container">
+<div class="cn-container">
   <%= render "feature_machine/flash" %>
-  <header class="page-header">
-    <p class="page-header__eyebrow">Admin · <%= work_kind_label(@work_item) %></p>
-    <h1 class="page-header__title"><%= @work_item.title %></h1>
+  <header class="cn-page-header">
+    <p class="cn-page-header-eyebrow">Admin · <%= work_kind_label(@work_item) %></p>
+    <h1 class="cn-page-header-title"><%= @work_item.title %></h1>
     <p class="mt-3 flex flex-wrap items-center gap-3">
       <%= work_item_status(@work_item) %>
       <span class="text-sm text-muted-foreground">
@@ -26,8 +26,8 @@
     <%= render config.admin_nav_partial if config.admin_nav_partial? %>
 
     <% if (pull_request = pull_request_href(@work_item)) %>
-      <div class="review-panel" id="review">
-        <p class="review-panel__lede">
+      <div class="cn-review-panel" id="review">
+        <p class="cn-review-panel-lede">
           <% if @work_item.in_review? %>
             <strong>Waiting on your review.</strong>
           <% end %>
@@ -36,15 +36,15 @@
           <span class="text-muted-foreground">github.com/<%= @work_item.pull_request_path %></span>
         </p>
         <% if @work_item.in_review? %>
-          <div class="review-panel__actions">
+          <div class="cn-review-panel-actions">
             <%# Plain anchors and buttons on the host's cn-button hooks; the engine ships no components. %>
             <a href="<%= pull_request %>" target="_blank" rel="noopener" data-slot="button" data-variant="outline" data-size="default"
                class="<%= button %> cn-button-size-default cn-button-variant-outline"><span data-slot="label" class="contents">Review on GitHub</span></a>
             <%= button_to "Mark shipped", admin_work_item_path(@work_item), method: :patch,
-                  params: { work_item: { status: "shipped" } }, class: "btn btn--primary btn--sm",
+                  params: { work_item: { status: "shipped" } }, class: "#{button} cn-button-size-sm cn-button-variant-default",
                   form: { data: { turbo_confirm: "Mark this shipped? It moves from the roadmap to the changelog, and everyone who asked sees it as live." } } %>
             <%= button_to "Send back", admin_work_item_path(@work_item), method: :patch,
-                  params: { work_item: { status: "in_progress" } }, class: "btn btn--secondary btn--sm" %>
+                  params: { work_item: { status: "in_progress" } }, class: "#{button} cn-button-size-sm cn-button-variant-outline" %>
           </div>
         <% end %>
       </div>
@@ -65,25 +65,25 @@
   <section class="spec" aria-label="Specification">
     <% { "Summary" => @work_item.summary, "Problem" => @work_item.problem, "Scope" => @work_item.scope,
          "Acceptance criteria" => @work_item.acceptance_criteria, "Progress" => @work_item.progress_note }.each do |heading, body| %>
-      <div class="entry-section">
-        <h2 class="entry-section__title"><%= heading %></h2>
+      <div class="cn-entry-section">
+        <h2 class="cn-entry-section-title"><%= heading %></h2>
         <% if body.present? %>
-          <div class="entry-section__content"><%= simple_format(body) %></div>
+          <div class="cn-entry-section-content"><%= simple_format(body) %></div>
         <% else %>
-          <p class="entry-section__content text-muted-foreground">Not written yet.</p>
+          <p class="cn-entry-section-content text-muted-foreground">Not written yet.</p>
         <% end %>
       </div>
     <% end %>
   </section>
 
   <section class="mt-12" aria-labelledby="requests-title">
-    <h2 class="entry-section__title" id="requests-title">Requests</h2>
+    <h2 class="cn-entry-section-title" id="requests-title">Requests</h2>
     <% if requests.empty? %>
-      <p class="entry-section__content text-muted-foreground">
+      <p class="cn-entry-section-content text-muted-foreground">
         No requests attached.<% if triage %> Attach some from <%= link_to "triage", triage %>.<% end %>
       </p>
     <% else %>
-      <div class="entry-list">
+      <div class="cn-entry-list">
         <% requests.each do |feature_request| %>
           <%# One request on the host's cn-nr-entry hooks. The requester is named the host's way
               (config.user_label) and never linked: the engine knows no host route. %>
@@ -104,7 +104,7 @@
             </div>
             <div data-slot="nr-entry-actions" class="cn-nr-entry-actions order-3 mt-1 flex flex-none items-start gap-1">
               <%= button_to "Detach", admin_feature_request_path(feature_request), method: :patch,
-                    params: { feature_request: { work_item_id: "" } }, class: "btn btn--quiet btn--sm" %>
+                    params: { feature_request: { work_item_id: "" } }, class: "#{button} cn-button-size-sm cn-button-variant-ghost" %>
             </div>
           </article>
         <% end %>
@@ -113,27 +113,27 @@
   </section>
 
   <section class="mt-12" aria-labelledby="relations-title">
-    <h2 class="entry-section__title" id="relations-title">Related work</h2>
+    <h2 class="cn-entry-section-title" id="relations-title">Related work</h2>
     <% if relations.any? %>
-      <ul class="relation-list" id="relations">
+      <ul class="cn-relation-list" id="relations">
         <% relations.each do |relation| %>
           <% other = relation.counterpart_of(@work_item) %>
-          <li class="relation-list__item">
+          <li class="cn-relation-list-item">
             <span><%= relation.label_for(@work_item) %> <%= link_to other.title, admin_work_item_path(other) %> <%= work_item_status(other) %></span>
-            <%= button_to "Remove", admin_work_item_relation_path(@work_item, relation), method: :delete, class: "btn btn--quiet btn--sm" %>
+            <%= button_to "Remove", admin_work_item_relation_path(@work_item, relation), method: :delete, class: "#{button} cn-button-size-sm cn-button-variant-ghost" %>
           </li>
         <% end %>
       </ul>
     <% end %>
 
     <% if similar.any? %>
-      <p class="entry-section__content mt-4">Looks related, not linked yet:</p>
-      <ul class="relation-list" id="similar-work-items">
+      <p class="cn-entry-section-content mt-4">Looks related, not linked yet:</p>
+      <ul class="cn-relation-list" id="similar-work-items">
         <% similar.each do |other| %>
-          <li class="relation-list__item">
+          <li class="cn-relation-list-item">
             <span><%= link_to other.title, admin_work_item_path(other) %> <%= work_item_status(other) %></span>
             <%= button_to "Link as related", admin_work_item_relations_path(@work_item),
-                  params: { work_item_relation: { to_work_item_id: other.id, kind: "related" } }, class: "btn btn--secondary btn--sm" %>
+                  params: { work_item_relation: { to_work_item_id: other.id, kind: "related" } }, class: "#{button} cn-button-size-sm cn-button-variant-outline" %>
           </li>
         <% end %>
       </ul>
@@ -141,7 +141,7 @@
 
     <% others = ::FeatureMachine::WorkItem.where.not(id: @work_item.id).order(:title) %>
     <% if others.any? %>
-      <%= form_with url: admin_work_item_relations_path(@work_item), scope: :work_item_relation, class: "relation-form" do %>
+      <%= form_with url: admin_work_item_relations_path(@work_item), scope: :work_item_relation, class: "cn-relation-form" do %>
         <span>This item</span>
         <%# Real <select>s on the host's cn-native-select hooks: platform picker and submission stay native. %>
         <span data-slot="native-select-wrapper" data-size="sm" class="relative w-fit has-[select:disabled]:opacity-50 group/native-select">
@@ -152,16 +152,16 @@
           <%= select_tag "work_item_relation[to_work_item_id]", options_for_select(others.map { |other| [ other.title, other.id ] }),
                 aria: { label: "Other work item" }, data: { slot: "native-select", size: "sm" }, class: select %>
         </span>
-        <button type="submit" class="btn btn--secondary btn--sm">Link</button>
+        <button type="submit" class="<%= button %> cn-button-size-sm cn-button-variant-outline">Link</button>
       <% end %>
     <% elsif relations.empty? %>
-      <p class="entry-section__content text-muted-foreground">No other work items to link to yet.</p>
+      <p class="cn-entry-section-content text-muted-foreground">No other work items to link to yet.</p>
     <% end %>
   </section>
 
   <% if @work_item.draft? %>
     <div class="mt-12">
-      <%= button_to "Delete this draft", admin_work_item_path(@work_item), method: :delete, class: "btn btn--danger btn--sm",
+      <%= button_to "Delete this draft", admin_work_item_path(@work_item), method: :delete, class: "#{button} cn-button-size-sm cn-button-variant-destructive",
             form: { data: { turbo_confirm: "Delete this draft? Its requests go back to triage." } } %>
     </div>
   <% end %>

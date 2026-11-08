@@ -1,26 +1,27 @@
 <% config = FeatureMachine.config %>
+<% button = "cn-button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 group/button select-none" %>
 <% content_for :title, "Edit work item — #{config.product_name}" %>
 <% content_for :head do %>
   <meta name="robots" content="noindex">
 <% end %>
 
-<div class="container">
+<div class="cn-container">
   <%= render "feature_machine/flash" %>
-  <header class="page-header">
-    <p class="page-header__eyebrow">Admin · Work item</p>
-    <h1 class="page-header__title"><%= @work_item.title %></h1>
-    <p class="page-header__lede">
+  <header class="cn-page-header">
+    <p class="cn-page-header-eyebrow">Admin · Work item</p>
+    <h1 class="cn-page-header-title"><%= @work_item.title %></h1>
+    <p class="cn-page-header-lede">
       Write the spec so someone who wasn't in the conversation could build it.
     </p>
     <%= render config.admin_nav_partial if config.admin_nav_partial? %>
   </header>
 
   <% if @work_item.feature_requests.any? %>
-    <section class="spec-evidence" aria-labelledby="evidence-title">
-      <h2 class="entry-section__title" id="evidence-title">
+    <section class="cn-spec-evidence" aria-labelledby="evidence-title">
+      <h2 class="cn-entry-section-title" id="evidence-title">
         The <%= pluralize(@work_item.feature_requests.size, "request") %> behind this
       </h2>
-      <ul class="spec-evidence__list">
+      <ul class="cn-spec-evidence-list">
         <% @work_item.feature_requests.includes(:user).oldest_first.each do |feature_request| %>
           <%# The requester is named the host's way (config.user_label); the engine knows no host route to link. %>
           <li>
@@ -30,7 +31,7 @@
         <% end %>
       </ul>
       <%= button_to "Redraft the spec from these requests", draft_admin_work_item_path(@work_item),
-            class: "btn btn--secondary btn--sm",
+            class: "#{button} cn-button-size-sm cn-button-variant-outline",
             form: { data: { turbo_confirm: "This replaces the title, summary, problem, scope and acceptance criteria with a new draft. Continue?" } } %>
     </section>
   <% end %>
