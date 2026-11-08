@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>feature_machine: feature requests your users' agents can file</title>
+<meta name="description" content="A Rails engine for feature requests, bug reports, a ranked triage queue and a roadmap, with an MCP endpoint so your users' agents can file and follow up on their own.">
+<meta property="og:title" content="feature_machine">
+<meta property="og:description" content="Feature requests, bug reports and a ranked triage queue for Rails, with an MCP endpoint for your users' agents.">
+<meta property="og:url" content="https://feature-machine.codenamev.com/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Cpath d=%22M3 2l10 6-10 6z%22 fill=%22%23f2b84b%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/">feature_machine</a>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#agents">Agents</a>
+    <a href="#install">Install</a>
+    <a href="https://github.com/codenamev/feature_machine">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero">
+  <p class="eyebrow">A Rails engine · MIT · Ruby 3.3+, Rails 8.1+</p>
+  <h1>Your users' agents already know what they want built.<br><span>Give them somewhere to say it.</span></h1>
+  <p class="lede">feature_machine adds feature requests, bug reports, a triage queue and a public roadmap to your Rails app. People file from a form. Their agents file over MCP. A judge groups the duplicates and ranks what's left, and you decide what ships.</p>
+  <div class="cta">
+    <a class="button primary" href="#install">Install the gem</a>
+    <a class="button" href="https://github.com/codenamev/feature_machine">Read the source</a>
+  </div>
+</section>
+
+<section id="how" class="flow">
+  <h2>Four stops between a wish and a pull request</h2>
+  <ol>
+    <li>
+      <span class="step">01</span>
+      <h3>Filed</h3>
+      <p>A request lands from <code>/feature-requests</code> or from <code>request_feature</code> over MCP. Same table, same status, same note back to the person who asked.</p>
+    </li>
+    <li>
+      <span class="step">02</span>
+      <h3>Grouped</h3>
+      <p>Embeddings cluster the five people asking for dark mode into one pile. Name no embedding model and requests still file; they just stay ungrouped.</p>
+    </li>
+    <li>
+      <span class="step">03</span>
+      <h3>Judged</h3>
+      <p>A structured-judgment model ranks the piles. <code>jev-latest</code> held 18 of 18 on the bundled calibration run, where paraphrases must not move an answer and real changes must.</p>
+    </li>
+    <li>
+      <span class="step">04</span>
+      <h3>Built, if you say so</h3>
+      <p>Triage forms a work item with a drafted spec. The optional local agent picks up planned items, runs your tests and opens a PR. Nothing merges without you.</p>
+    </li>
+  </ol>
+</section>
+
+<section id="agents" class="split">
+  <div>
+    <h2>MCP is a front door, not a back door</h2>
+    <p>Mount <code>feature_machine_routes :mcp</code> and any agent with a bearer token can file requests, report bugs and read the roadmap for the person it works for. It sees that person's requests and nobody else's.</p>
+    <p>Maintainer tools (<code>list_work_items</code>, <code>update_work_item</code>) only show up for tokens whose user passes your admin check, and the engine re-checks that on every call. An agent can move an item along and attach a PR. It can't rewrite the spec or decline the work. A browser cookie never counts as an MCP credential.</p>
+  </div>
+  <pre class="code"><code><span class="c"># what a user's agent sees</span>
+list_feature_requests
+request_feature
+list_bug_reports
+report_bug
+read_roadmap
+
+<span class="c"># and a maintainer's, on top</span>
+list_work_items
+get_work_item
+update_work_item</code></pre>
+</section>
+
+<section class="facts">
+  <div>
+    <h3>Every model is optional</h3>
+    <p>Embeddings, the spec drafter and the judge each stay off until you name a RubyLLM model. If a provider key goes missing, that step steps aside and the rest keeps working.</p>
+  </div>
+  <div>
+    <h3>Markup, your styles</h3>
+    <p>Pages ship <code>cn-*</code> class hooks and inherit your <code>ApplicationController</code> and layout. A small default stylesheet sits in a low cascade layer, so your rules win.</p>
+  </div>
+  <div>
+    <h3>Bring your own board</h3>
+    <p>Already have a roadmap page or bug tracker? Point <code>roadmap_path</code> at it and the engine links there instead.</p>
+  </div>
+</section>
+
+<section id="install" class="install">
+  <h2>Three commands and an initializer</h2>
+  <pre class="code"><code><span class="c"># Gemfile</span>
+gem "feature_machine"
+
+bin/rails g feature_machine:install
+bin/rails feature_machine:install:migrations
+bin/rails db:migrate</code></pre>
+  <p>Then tell it who's signed in, who may triage, and how a bearer token becomes a credential:</p>
+  <pre class="code"><code>FeatureMachine.configure do |config|
+  config.current_user = -&gt;(request) { Session.find_by(id: request.cookie_jar.signed[:session_id])&amp;.user }
+  config.admin = -&gt;(user) { user.admin? }
+  config.authenticate_api = -&gt;(token) { ApiToken.authenticate(token) }
+end</code></pre>
+  <p class="note">Needs Postgres with pgvector. Full reference in the <a href="https://github.com/codenamev/feature_machine#readme">README</a>.</p>
+</section>
+</main>
+
+<footer>
+  <p>Built for and extracted from <a href="https://nowreading.dev">nowreading.dev</a>. MIT licensed. <a href="https://github.com/codenamev/feature_machine">codenamev/feature_machine</a></p>
+</footer>
+</body>
+</html>
