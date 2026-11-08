@@ -7,12 +7,12 @@
   <meta name="robots" content="noindex">
 <% end %>
 
-<div class="container">
+<div class="cn-container">
   <%= render "feature_machine/flash" %>
-  <header class="page-header">
-    <p class="page-header__eyebrow">Roadmap</p>
-    <h1 class="page-header__title">What's being built, and what shipped</h1>
-    <p class="page-header__lede">
+  <header class="cn-page-header">
+    <p class="cn-page-header-eyebrow">Roadmap</p>
+    <h1 class="cn-page-header-title">What's being built, and what shipped</h1>
+    <p class="cn-page-header-lede">
       Each entry is a piece of work shaped from what people asked for. Planned
       work first, then the changelog.
     </p>
@@ -33,7 +33,7 @@
   </header>
 
   <% if @roadmap.empty? %>
-    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance empty-state">
+    <div data-slot="empty" class="cn-empty flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance">
       <div data-slot="empty-header" class="cn-empty-header flex max-w-sm flex-col items-center">
         <h2 data-slot="empty-title" class="cn-empty-title cn-font-heading">Nothing on the roadmap yet</h2>
         <p data-slot="empty-description" class="cn-empty-description text-muted-foreground">Requests are still being triaged. Planned work will appear here.</p>
@@ -48,8 +48,8 @@
         <%= work_item_status(work_items.first, public: true) %>
         <span class="text-sm text-muted-foreground"><%= pluralize(work_items.size, "item") %></span>
       </h2>
-      <p class="page-header__lede mt-2"><%= work_item_status_blurb(status) %></p>
-      <div class="entry-list">
+      <p class="cn-page-header-lede mt-2"><%= work_item_status_blurb(status) %></p>
+      <div class="cn-entry-list">
         <%= render partial: "feature_machine/roadmap/work_item", collection: work_items %>
       </div>
     </section>
@@ -57,11 +57,11 @@
 
   <% if @roadmap.changelog.any? %>
     <section class="mt-12" aria-labelledby="changelog">
-      <h2 id="changelog" class="page-header__title">Changelog</h2>
-      <p class="page-header__lede mt-2">Features shipped and bugs fixed, newest first.</p>
+      <h2 id="changelog" class="cn-page-header-title">Changelog</h2>
+      <p class="cn-page-header-lede mt-2">Features shipped and bugs fixed, newest first.</p>
       <% @roadmap.changelog.each do |month, work_items| %>
         <h3 class="changelog-month" id="changelog-<%= month.strftime("%Y-%m") %>"><%= month.strftime("%B %Y") %></h3>
-        <div class="entry-list">
+        <div class="cn-entry-list">
           <%= render partial: "feature_machine/roadmap/work_item", collection: work_items %>
         </div>
       <% end %>

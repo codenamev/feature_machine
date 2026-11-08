@@ -27,14 +27,14 @@
 
     <div data-slot="nr-entry-details" class="cn-nr-entry-details mt-4 pt-4">
       <% if feature_request.progress_note.present? %>
-        <div class="entry-section">
-          <h3 class="entry-section__title">Update</h3>
-          <p class="entry-section__content"><%= simple_format(feature_request.progress_note, {}, wrapper_tag: "span") %></p>
+        <div class="cn-entry-section">
+          <h3 class="cn-entry-section-title">Update</h3>
+          <p class="cn-entry-section-content"><%= simple_format(feature_request.progress_note, {}, wrapper_tag: "span") %></p>
         </div>
       <% end %>
-      <div class="entry-section">
-        <h3 class="entry-section__title"><%= bug ? "Your report" : "Your request" %></h3>
-        <p class="entry-section__content">
+      <div class="cn-entry-section">
+        <h3 class="cn-entry-section-title"><%= bug ? "Your report" : "Your request" %></h3>
+        <p class="cn-entry-section-content">
           <% if feature_request.description.present? %>
             <%= simple_format(feature_request.description, {}, wrapper_tag: "span") %>
           <% else %>
