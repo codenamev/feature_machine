@@ -2,6 +2,7 @@
     because a fresh host's layout doesn't render flash. A host whose layout
     already does sets config.flash_in_pages = false; the engine's standalone
     layout renders its own, so the page skips it there. %>
+<%= render "feature_machine/default_styles" %>
 <% config = FeatureMachine.config %>
 <% if config.flash_in_pages && config.layout != "feature_machine" %>
   <% if notice.present? %><p role="status" data-slot="flash-notice" class="feature-machine-flash"><%= notice %></p><% end %>

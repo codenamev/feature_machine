@@ -43,6 +43,12 @@ module FeatureMachine
       config
     end
 
+    # The engine's default cn-* stylesheet (app/assets/feature_machine/default.css),
+    # read once. Engine pages inline it unless config.default_stylesheet is false.
+    def default_stylesheet
+      @default_stylesheet ||= Engine.root.join("app/assets/feature_machine/default.css").read.freeze
+    end
+
     # Tests only: forget the host's configuration.
     def reset_config!
       @config = nil

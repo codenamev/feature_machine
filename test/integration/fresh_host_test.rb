@@ -59,6 +59,19 @@ class FeatureMachine::FreshHostTest < ActionDispatch::IntegrationTest
     assert_select "##{ActionView::RecordIdentifier.dom_id(request)}", count: 0
   end
 
+  test "pages inline the default cn-* stylesheet once, in a layer, unless turned off" do
+    get "/feature-requests/new", headers: as(:one)
+    assert_select "style", count: 1
+    assert_includes css_block, "@layer feature_machine"
+    assert_includes css_block, ".cn-button"
+
+    @config.default_stylesheet = false
+    get "/feature-requests/new", headers: as(:one)
+    assert_select "style", count: 0
+  ensure
+    @config.default_stylesheet = true
+  end
+
   test "an invalid request re-renders the form" do
     post "/feature-requests", params: { feature_request: { title: "x" } }, headers: as(:one)
     assert_response :unprocessable_entity
@@ -219,6 +232,8 @@ class FeatureMachine::FreshHostTest < ActionDispatch::IntegrationTest
   private
 
   def as(fixture) = { "X-Test-User" => users(fixture).id.to_s }
+
+  def css_block = css_select("style").first.text
 
   def bearer(token) = { "Authorization" => "Bearer #{token}", "Accept" => "application/json" }
 

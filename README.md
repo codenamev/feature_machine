@@ -91,9 +91,11 @@ model.
   set `config.parent_controller`, `config.admin_parent_controller` or
   `config.api_parent_controller`. An API base of your own keeps its own
   `render_error` and error handling.
-- **The engine ships markup, not CSS.** Its pages carry `cn-*` class hooks
-  for your stylesheet, alongside Tailwind-style utility classes that only take
-  effect if your app already builds Tailwind. They show their own flash notices,
+- **The engine's pages use `cn-*` classes and ship plain default styles for
+  them**, inlined in a `@layer feature_machine` block, so a host without a
+  design system still renders cleanly and any `cn-*` rule of yours wins
+  without `!important`. Set `config.default_stylesheet = false` if your own
+  stylesheet covers them all. They show their own flash notices,
   because a new app's layout doesn't; set `config.flash_in_pages = false` if
   yours does.
 - **Your own roadmap or bug board** replaces the engine's by pointing
@@ -197,6 +199,7 @@ initializer never autoloads app code.
 | `admin_nav_partial` | `nil` | Host partial rendered atop engine admin pages, e.g. `"admin/nav"` |
 | `sign_in_path` | `new_session_path` if drawn | `->(controller) { ... }` where signed-out visitors go |
 | `flash_in_pages` | `true` | Engine pages render their own flash notices |
+| `default_stylesheet` | `true` | Engine pages inline default `cn-*` styles (in a CSS layer your rules override) |
 | `roadmap_path`, `bug_reports_path`, `new_bug_report_path`, `admin_triage_path` | engine's pages | `->(view, ...) { ... }` to link your own pages instead; `nil` drops the link |
 
 ## The fulfilment agent
