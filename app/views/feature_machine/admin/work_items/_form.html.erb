@@ -13,7 +13,7 @@
 <% fields = [
   [ :title, :input, "The capability or fix in the product's terms, not a user's quote.", { maxlength: 120, required: true } ],
   [ :kind, :select, nil, { choices: [ [ "Feature", "feature" ], [ "Bug", "bug" ] ] } ],
-  [ :status, :select, "Draft is private. Planned, in progress and shipped appear on the roadmap. In review shows to users as in progress.", { choices: work_item_status_options } ],
+  [ :status, :select, "Draft is private. Planned, in progress and shipped appear on the roadmap. In review shows to users as in progress.", { choices: work_item_status_options(work_item) } ],
   [ :summary, :textarea, "Shown on the roadmap. One or two sentences on what changes for users. Required before this leaves draft.", { rows: 3 } ],
   [ :problem, :textarea, "Who hits this and what they are trying to do.", { rows: 6 } ],
   [ :scope, :textarea, "What is in, and what was asked for but is deliberately out.", { rows: 6 } ],

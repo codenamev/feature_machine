@@ -37,8 +37,21 @@ module FeatureMachine
     GITHUB = "https://github.com/".freeze
     PULL_REQUEST_URL = %r{\A#{GITHUB}(?<path>[\w.-]+/[\w.-]+/pull/(?<number>\d+))\z}
 
-    # What a maintainer's agent may do to a work item's status. Approving a
-    # draft (draft -> planned) and declining are triage, and triage is human.
+    # Every status move a work item can make, whoever makes it. A declined
+    # item goes back to draft before it can be planned again, and a shipped
+    # one reopens to in progress, so nothing skips triage or keeps a stale
+    # ship date.
+    TRANSITIONS = {
+      "draft" => %w[planned declined],
+      "planned" => %w[draft in_progress shipped declined],
+      "in_progress" => %w[planned in_review shipped declined],
+      "in_review" => %w[in_progress shipped declined],
+      "shipped" => %w[in_progress],
+      "declined" => %w[draft]
+    }.freeze
+
+    # The subset a maintainer's agent may make. Approving a draft
+    # (draft -> planned) and declining are triage, and triage is human.
     AGENT_TRANSITIONS = {
       "planned" => %w[in_progress],
       "in_progress" => %w[planned in_review shipped],
@@ -60,6 +73,7 @@ module FeatureMachine
     validates :pull_request_url, format: { with: PULL_REQUEST_URL, message: "must be a GitHub pull request URL, like https://github.com/owner/repo/pull/123" }, allow_blank: true
     # Asking for review without saying where the work is helps nobody.
     validates :pull_request_url, presence: { message: "is required to ask for review" }, if: :in_review?
+    validate :status_transition_allowed, on: :update, if: :will_save_change_to_status?
 
     scope :embedded,     -> { where.not(embedding: nil) }
     scope :active,       -> { where(status: %i[draft planned in_progress in_review]) }
@@ -143,10 +157,27 @@ module FeatureMachine
       problem.present? && acceptance_criteria.present?
     end
 
+    # Statuses this item may move to from where it is saved now.
+    def next_statuses
+      TRANSITIONS.fetch(status_in_database.to_s, [])
+    end
+
     private
 
+    def status_transition_allowed
+      return if next_statuses.include?(status.to_s)
+
+      errors.add(:status, "can't move from #{status_in_database.to_s.humanize(capitalize: false)} to #{status.to_s.humanize(capitalize: false)}")
+    end
+
+    # shipped_at means "shipped, and when": stamped on the way in, cleared on
+    # the way out, so a reopened item never carries an old date.
     def stamp_shipped_at
-      self.shipped_at ||= Time.current if shipped? && (new_record? || will_save_change_to_status?)
+      if shipped?
+        self.shipped_at ||= Time.current if new_record? || will_save_change_to_status?
+      elsif will_save_change_to_status?
+        self.shipped_at = nil
+      end
     end
 
     def push_status_to_requests
