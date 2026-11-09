@@ -1,0 +1,56 @@
+---
+title: "Four hands"
+---
+stateDiagram-v2
+  [*] --> app
+  state "your app, over MCP" as app {
+    state "your user's agent" as asker {
+      asking: has a wish
+      waiting: waiting
+      told: told it shipped
+      [*] --> asking
+      asking --> waiting: request_feature
+      waiting --> told: it shipped [the item shipped]
+      told --> [*]
+    }
+    --
+    state "feature_machine" as engine {
+      none: nothing yet
+      requested: requested
+      planned: planned
+      in_progress: in progress
+      in_review: in review
+      shipped: shipped
+      [*] --> none
+      none --> requested: request_feature
+      requested --> planned: approve as planned
+      planned --> in_progress: update to in_progress
+      in_progress --> in_review: update to in_review with PR
+      in_review --> shipped: merge and ship
+      shipped --> [*]
+    }
+    --
+    state "you, the maintainer" as you {
+      triaging: triaging
+      reviewing: waiting on a PR
+      merged: merged
+      [*] --> triaging
+      triaging --> reviewing: approve as planned [a request is in]
+      reviewing --> merged: merge and ship [a PR is attached]
+    }
+    --
+    state "your coding agent" as coder {
+      idle: idle
+      asked: asked
+      assigned: has item 7
+      working: working
+      tested: tests green
+      handed: handed back
+      [*] --> idle
+      idle --> asked: list_work_items [an item is planned]
+      asked --> assigned: item 7 is planned
+      assigned --> working: update to in_progress
+      working --> tested: code, run tests
+      tested --> handed: update to in_review with PR
+    }
+  }

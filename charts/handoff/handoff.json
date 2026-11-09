@@ -1,0 +1,21 @@
+{
+ "title": "Four hands",
+ "checked": "Every reachable state checked (10 states, 9 steps). All three rules hold.",
+ "rules": [
+  {
+   "rule": "Only you plan work",
+   "says": "A coding agent can pick up planned work, but approving a request is triage, and triage is human (WorkItem::AGENT_TRANSITIONS).",
+   "path": "Let the agent approve its own item and it breaks in 2 steps: request_feature, agent approves its own item."
+  },
+  {
+   "rule": "Nothing ships without a pull request",
+   "says": "In review needs a GitHub pull request URL, and you merge only what is in review.",
+   "path": "Take away the guard on \"merge and ship\" and it breaks in 6 steps: request_feature, approve as planned, list_work_items, item 7 is planned, update to in_progress, merge and ship, with no PR attached."
+  },
+  {
+   "rule": "One order, and it always finishes",
+   "says": "From any point there is only one next message, and every run ends shipped, with the asker told.",
+   "path": "Holds on every path: nine messages, top to bottom."
+  }
+ ]
+}

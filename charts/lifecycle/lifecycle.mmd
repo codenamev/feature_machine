@@ -1,0 +1,24 @@
+---
+title: "One wish"
+---
+stateDiagram-v2
+  [*] --> filed
+  filed: Filed
+  grouped: Grouped
+  judged: Judged
+  draft: Draft
+  planned: Planned
+  declined: Declined
+  in_progress: In progress
+  in_review: In review
+  shipped: Shipped
+  filed --> grouped: embeddings cluster it
+  grouped --> judged: the judge ranks piles
+  judged --> draft: triage drafts a spec
+  draft --> planned: [you approve]
+  draft --> declined: [you decline]
+  planned --> in_progress: an agent picks it up
+  in_progress --> in_review: hands back a PR
+  in_review --> shipped: you merge
+  shipped --> [*]
+  declined --> [*]
