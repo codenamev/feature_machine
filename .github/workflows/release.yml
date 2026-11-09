@@ -5,13 +5,23 @@ name: Release
 #   1. Bump lib/feature_machine/version.rb and date the CHANGELOG entry; merge to main.
 #   2. On GitHub, draft a release with a new tag vX.Y.Z on main, and publish it.
 #
+# To retry a failed push, run this workflow by hand (Actions -> Release -> Run
+# workflow) from main with the release's tag; it uses main's copy of this file.
+#
 # RubyGems trusts this workflow through OIDC (trusted publishing), so there is
 # no API key in the repo and no OTP to type. The trusted publisher on
 # rubygems.org names this repo, this file (release.yml) and the `rubygems`
-# environment.
+# environment. The repository variable RUBYGEMS_OWNER holds the RubyGems
+# account ID that owns the gem: RubyGems needs it to create a gem that doesn't
+# exist yet, and it is harmless afterwards.
 on:
   release:
     types: [ published ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to push, e.g. v0.1.0"
+        required: true
 
 permissions:
   contents: read
@@ -23,10 +33,14 @@ jobs:
     permissions:
       contents: read
       id-token: write   # lets the job ask GitHub for an OIDC token to show RubyGems
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
       - name: Checkout the release tag
         uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -36,16 +50,35 @@ jobs:
       - name: Check the tag matches the gem version
         run: |
           version=$(ruby -r ./lib/feature_machine/version -e 'print FeatureMachine::VERSION')
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match FeatureMachine::VERSION ${version} (expected v${version})."
+          if [ "${TAG}" != "v${version}" ]; then
+            echo "::error::Tag ${TAG} does not match FeatureMachine::VERSION ${version} (expected v${version})."
             exit 1
           fi
 
       - name: Build the gem
         run: gem build feature_machine.gemspec
 
+      # What rubygems/configure-rubygems-credentials does, plus the `owner` field
+      # RubyGems wants when trusted publishing creates a new gem (no released
+      # version of the action sends it yet).
       - name: Get RubyGems credentials (trusted publishing)
-        uses: rubygems/configure-rubygems-credentials@v2.1.0
+        env:
+          OWNER: ${{ vars.RUBYGEMS_OWNER }}
+        run: |
+          jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=rubygems.org" | jq -r .value)
+          body=$(jq -n --arg jwt "$jwt" --arg owner "$OWNER" '{jwt: $jwt} + (if $owner == "" then {} else {owner: $owner} end)')
+          response=$(curl -sS -w '\n%{http_code}' -X POST https://rubygems.org/api/v1/oidc/trusted_publisher/exchange_token \
+            -H 'content-type: application/json' -H 'accept: application/json' -d "$body")
+          status=$(echo "$response" | tail -n1); json=$(echo "$response" | sed '$d')
+          if [ "$status" != "201" ]; then
+            echo "::error::RubyGems refused the token exchange (HTTP ${status}): ${json}"
+            exit 1
+          fi
+          key=$(echo "$json" | jq -r .rubygems_api_key)
+          echo "::add-mask::${key}"
+          echo "GEM_HOST_API_KEY=${key}" >> "$GITHUB_ENV"
+          echo "$json" | jq '{name, scopes, owner, expires_at}'
 
       - name: Push to RubyGems
         run: gem push feature_machine-*.gem
