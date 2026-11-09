@@ -1,0 +1,21 @@
+{
+ "title": "One wish",
+ "checked": "Every reachable state checked (9 states, 8 steps). All 3 rules hold.",
+ "rules": [
+  {
+   "rule": "Every step can happen, and none is a dead end",
+   "says": "Each of the 9 states is reached from the start, and every path can still reach its end (shipped, declined).",
+   "path": "Holds: all 9 reached, none stuck."
+  },
+  {
+   "rule": "Only a person plans work",
+   "says": "Nothing is planned, built or shipped unless you approved it in triage. An agent's moves (WorkItem::AGENT_TRANSITIONS) start at planned.",
+   "path": "Take away the approval guard and it breaks in 4 steps: embeddings cluster it, the judge ranks piles, triage drafts a spec, [the agent approves]."
+  },
+  {
+   "rule": "Nothing ships without a pull request",
+   "says": "Shipped work came through review with a GitHub pull request attached.",
+   "path": "Take away the pull request guard and it breaks in 6 steps: embeddings cluster it, the judge ranks piles, triage drafts a spec, [you approve], an agent picks it up, [merged, no PR]."
+  }
+ ]
+}
