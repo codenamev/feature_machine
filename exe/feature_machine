@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-require_relative "../lib/feature_machine/agent"
-
-exit FeatureMachine::Agent::CLI.start

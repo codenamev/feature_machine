@@ -12,4 +12,5 @@ First public release.
   root route for sign-in to land on.
 - Optional embeddings (pgvector via neighbor) for duplicate detection, and a
   RubyLLM drafter and judge behind `FeatureMachine.configure`.
-- `feature_machine` executable for the agent hand-off loop.
+- Maintainer MCP tools (`list_work_items`, `get_work_item`, `update_work_item`)
+  so a coding agent can pick up planned items and attach a pull request.

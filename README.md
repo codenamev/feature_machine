@@ -4,8 +4,8 @@ Feature requests, work items, and the judge pipeline, packaged as a Rails engine
 
 Your users file feature requests and bug reports, on your site or through
 their own agents over MCP. You triage them into work items, a judge ranks and
-groups them, and an optional local agent turns a planned item into a pull
-request for you to approve.
+groups them, and your own coding agent can pick up a planned item over MCP and
+attach the pull request for you to approve.
 
 ## Requirements
 
@@ -201,76 +201,6 @@ initializer never autoloads app code.
 | `flash_in_pages` | `true` | Engine pages render their own flash notices |
 | `default_stylesheet` | `true` | Engine pages inline default `cn-*` styles (in a CSS layer your rules override) |
 | `roadmap_path`, `bug_reports_path`, `new_bug_report_path`, `admin_triage_path` | engine's pages | `->(view, ...) { ... }` to link your own pages instead; `nil` drops the link |
-
-## The fulfilment agent
-
-`feature_machine agent` runs on a developer's machine, inside a checkout of the
-host app. It reads planned work items from the host's maintainer MCP endpoint,
-writes code in that checkout, runs the host's test command, and opens a pull
-request. The engine never loads it; `require "feature_machine/agent"` opts in.
-
-```
-export FEATURE_MACHINE_APP_URL=https://app.example
-export FEATURE_MACHINE_TOKEN=...        # a maintainer token held by an admin
-export OPENAI_API_KEY=...               # or the key for whichever provider you use
-
-bundle exec feature_machine agent                                  # list planned work items
-bundle exec feature_machine agent --work-item 7 --plan-model gpt-4.1
-```
-
-Pick a capable model, and check it with `bin/rails feature_machine:eval_agent`.
-That task seeds four work items on your app and runs the agent against a
-scratch clone of your checkout. It confirms the agent opens a pull request
-for a small change, reports an item blocked when it has no criteria or would
-break sign-in, and never commits to `main`. In November 2026 runs,
-`~anthropic/claude-sonnet-latest` (through OpenRouter) passed 8 of 8 across
-two runs, `gpt-4.1` passed about half, mostly by writing tests that couldn't
-see what they checked, and `gpt-4.1-mini` spent its whole budget exploring.
-Treat that as a starting point, not a benchmark: run the eval yourself.
-
-`--max-steps` (default 120) caps the run. One step is one model turn or one
-round of tool calls; a small item takes 15 to 75. Approvals don't count.
-Every run ends in a pull request or a progress note starting "Blocked:"; if
-the model stops without either, it is asked once more.
-
-Every write back to the app and every pull request stops and asks you `[y/N]`
-at the terminal first. Settings come from flags, then ENV, then
-`.feature_machine.yml` in the checkout. The token is read from ENV only, never
-from a flag or the YAML file. Provider keys come from their usual variables
-(`OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and so on).
-
-### What it can and can't do
-
-- It sees three host tools: `list_work_items`, `get_work_item`,
-  `update_work_item`. Every `update_work_item` call waits for you to approve it.
-- In the checkout it has `list_files` (tracked and new files, not ignored
-  ones), `read_file`, `write_file`, `run_tests` and `open_pull_request`.
-- File reads and writes are confined to the checkout, checked both by path and
-  after resolving symlinks.
-- Tests run as an argv list with no shell.
-- `open_pull_request` waits for your approval. It never commits to `main` or
-  `master`: work started there moves to `feature-machine/work-item-<id>`. It
-  only pushes after a separate judge passes the full diff against the work
-  item's acceptance criteria. The agent can't supply those criteria itself;
-  they are fetched from the host. Red tests or an empty diff fail without a
-  model call.
-- It never deploys and never touches the running app beyond those three tools.
-- It can't run migrations. A change that needs one leaves the test schema
-  behind, so the suite fails and the agent reports the item blocked.
-
-### The security concession
-
-Version one runs with your own credentials on a machine that already holds
-them: your git remote, your `gh` login, your model keys. That is the same trust
-you already extend to any coding agent you run locally. The deployed app gets
-no new attack surface, because all it ever sees is a maintainer token making
-API calls.
-
-What that does mean: the work item text is input to the model, and the test
-command executes code the model wrote. The approval gates and the judge narrow
-what reaches GitHub. They don't sandbox the test run. If that matters for your
-app, run the agent in a disposable checkout or container. A sandboxed test
-runner is the planned upgrade, not part of this version.
 
 ## License
 
